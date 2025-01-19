@@ -1,4 +1,4 @@
-:root {
+/* :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -65,4 +65,143 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+} */
+
+.all-element-center {
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+
+.box-head{
+  height: 1;
+  /* padding-left: 10; */
+}
+
+.box-body{
+  height: 1;
+  width: 1;
+  padding-Top: 104px;
+}
+
+.grid-head {
+  height: 60px;
+  background-color: #ffd700;
+  padding-left: 20px;
+}
+
+.grid-body {
+  height: 1;
+  width: 1;
+  /* background-color: pink; */
+}
+
+/* .grid-body2 {
+  height: 80px;
+  width: 80px;
+  background-color: Red;
+} */
+
+.grid-body3 {
+  height: 1;
+  width: 1;
+  /* background-color: skyblue; */
+}
+
+.position-header {
+  justify-content: left;
+  align-items: center;
+  display: flex;
+}
+
+.frontProp{
+  font-size: 24px;
+  font-family: Baloo Bhai;
+  font-weight: 700
+}
+
+.close-popup-button {
+  position: absolute;
+  top: -438px;
+  left: -50px;
+  /* padding: 10px; */
+  color: white !important;
+  border: none;
+  font-size: 22px !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+  outline: none !important;
+  background-color: Red;
+}
+
+.save-popup-button {
+  position: absolute;
+  top: -16px;
+  left: -66px;
+  color: white !important;
+  border: none;
+  font-size: 22px !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+  outline: none !important;
+  background-color: Red;
+}
+
+.share-popup-button {
+  position: relative;
+  top: -16px;
+  left: -26px;
+  color: white !important;
+  border: none;
+  font-size: 22px !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+  outline: none !important;
+  background-color: Red;
+}
+
+.overlay-box {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.share-data{
+  background: linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%);
+  border-radius: 3;
+  border: 0;
+  box-shadow: 0 3px 5px 2px rgba(255, 105, 135, .3);
+  color: white;
+  border: 1px solid blue;
+    
+    color: aquamarine;
+    font-style: italic;
+}
+
+.box-button{
+  height: 1;
+  width: 1;
+  /* background-color: aqua; */
+  font-size: 16px;
+  margin: 10px;
+}
+
+.box-img-button{
+  margin-right:58px;
+  font-family: Nunito;
+  font-weight: 700
+}
+
+.box-Vdo-button{
+  margin-left: 58px;
+  font-family: Nunito;
+  font-weight: 700
 }

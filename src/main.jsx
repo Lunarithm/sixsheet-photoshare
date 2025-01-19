@@ -9,12 +9,12 @@ import {
 } from "react-router-dom";
 
 const router = createBrowserRouter([
+    // {
+    //     path: "/welcome",
+    //     element: <App/>
+    // },
     {
-        path: "/",
-        element: <App/>
-    },
-    {
-        path: "/media/:uuid",
+        path: "/media/:shortUUID",
         element: <App/>
     },
 ]);

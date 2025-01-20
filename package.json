@@ -22,6 +22,7 @@
     "react-player": "^2.16.0",
     "react-router-dom": "^7.1.1",
     "react-share-social": "^0.1.60",
+    "react-spinners": "^0.15.0",
     "sequelize": "^6.37.5"
   },
   "devDependencies": {

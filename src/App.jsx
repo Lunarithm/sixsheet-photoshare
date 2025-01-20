@@ -46,6 +46,7 @@ function App() {
   const [pathVdo, setPathVdo] = useState("");
   const [shareResult, setShare] = useState(false);
 
+
   const dataToApp = async () => {
     try {
       const result = await axios.get(
@@ -63,8 +64,8 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    dataToApp();
+  useEffect(async () => {
+    await dataToApp();
   }, []);
 
   const togglePopup = () => {
@@ -128,6 +129,7 @@ function App() {
                 }}
               >
                 <img
+                onLoad={() => handleLoadImage("img1")}
                   src={pathImg}
                   style={{
                     width: "100%",

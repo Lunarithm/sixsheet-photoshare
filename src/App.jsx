@@ -1,5 +1,5 @@
 import viteLogo from "/vite.svg";
-import { useState, useEffect } from "react";
+import { useState, useEffect  } from "react";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { lime, purple, red } from "@mui/material/colors";
 import { styled } from "@mui/material/styles";
@@ -31,10 +31,10 @@ import share from "./assets/share.png";
 import ReactPlayer from "react-player";
 import { ShareSocial } from "react-share-social";
 import axios from "axios";
+import ClipLoader from "react-spinners/ClipLoader";
 
 function App() {
-  // const [loading, setLoading] = useState(false);
-  // const [isComplete, setIsComplete] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const { shortUUID } = useParams();
   console.log(shortUUID);
@@ -57,6 +57,7 @@ function App() {
       console.log(png);
       setPathImg(png);
       setPathVdo(mp4);
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching paths:", error);
     }
@@ -87,10 +88,6 @@ function App() {
     setOpen(true);
   };
 
-  // function handleSave() {
-  //   alert("Button clicked!");
-  // }
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline enableColorScheme />
@@ -101,7 +98,15 @@ function App() {
             CheesePlease
           </Grid>
         </Box>
+        <Box className={"box-test all-element-center"}>
+        {loading ? (
+                <ClipLoader color={"#123abc"} loading={loading} size={100}
+                className="all-element-center"
+                />
+              ) : (
+        <Grid>
         <Box className="box-body all-element-center">
+        
           <Grid
             container
             spacing={1}
@@ -201,6 +206,9 @@ function App() {
             <Box onClick={() => handleImage(pathImg)} className={"box-img-button"}>Image</Box>
             <Box onClick={() => handleVdo(pathVdo)} className={"box-Vdo-button"}>video</Box>
           </Grid>
+        </Box>
+        </Grid>
+         )}
         </Box>
         <Box className="all-element-center">
           <Modal

@@ -81,7 +81,7 @@ button:focus-visible {
 .box-body{
   height: 1;
   width: 1;
-  padding-Top: 104px;
+  /* padding-Top: 104px; */
 }
 
 .grid-head {
@@ -204,4 +204,12 @@ button:focus-visible {
   margin-left: 58px;
   font-family: Nunito;
   font-weight: 700
+}
+
+.box-test{
+  height: 1;
+  width: 1;
+  /* background-color: aqua; */
+  font-size: 16px;
+  padding-top: 100px;
 }

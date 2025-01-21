@@ -47,6 +47,15 @@ function App() {
   const [shareResult, setShare] = useState(false);
   const [mediaState,setMediaState] = useState("web");
  
+  async function convertUrlToFile(url,type) {
+    const dataType = type == "img" ? "image.png" : "vdo.mp4"
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const file = new File([blob], dataType, { type: blob.type });
+    console.log(url);
+    return file;
+}
+
   const dataToApp = async () => {
     try {
       const result = await axios.get(
@@ -58,6 +67,8 @@ function App() {
       // console.log(png);
       setPathImg(png);
       setPathVdo(mp4);
+      await convertUrlToFile(png,'img');
+      await convertUrlToFile(mp4,"vdo");
       // setLoading(false);
     } catch (error) {
       console.error(error);
@@ -68,6 +79,7 @@ function App() {
     const goData = async () => {
       try {
         await dataToApp();
+       
         setLoading(false);
       } catch (error) {
         console.error(error);
@@ -106,7 +118,9 @@ function App() {
     if (navigator.share) {
       navigator
         .share({
-          url: state,
+          file: [state],
+          title: "Sixsheet Photoshare",
+          text: "Beloved :)" // text
         })
         .then(() => {
           console.log("Successfully shared");

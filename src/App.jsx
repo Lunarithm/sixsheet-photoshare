@@ -294,7 +294,6 @@ function App() {
                   <ReactPlayer
                     url={vdo}
                     controls={true}
-                    playing={true}
                     loop={true}
                     style={{
                       maxHeight: "72%",

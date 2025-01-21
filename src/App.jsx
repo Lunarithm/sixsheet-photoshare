@@ -20,9 +20,6 @@ import { RotatingLines } from "react-loader-spinner";
 import "./index.css";
 // import getUUID from './modelControll/dataResult'
 import { useNavigate, useParams } from "react-router-dom";
-// import Medias from './model/medias';
-// import png from "./assets/01.png";
-// import mp4 from "./assets/video_Result.mp4";
 import icon from "./assets/icon.png";
 import VDO from "./assets/VDO.png";
 import Backdrop from "@mui/material/Backdrop";
@@ -121,10 +118,11 @@ function App() {
 
   const handleShareClick = () => {
     const state = mediaState == 'img' ? image : vdo;
+    console.log(vdoFile)
     if (navigator.share) {
       navigator
         .share({
-          files: mediaState == "img" ? [imgFile] : [vdoFile],
+          files: [vdoFile],
           title: "SixsheetPhotoshare",
           text: "Beloved :)" // text
         })
@@ -296,7 +294,6 @@ function App() {
                   <ReactPlayer
                     url={vdo}
                     controls={true}
-                    playing={true}
                     loop={true}
                     style={{
                       maxHeight: "72%",

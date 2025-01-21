@@ -48,13 +48,17 @@ function App() {
   const [pathVdo, setPathVdo] = useState("");
   const [shareResult, setShare] = useState(false);
   const [mediaState,setMediaState] = useState("web");
- 
+
   async function convertUrlToFile(url,type) {
     const dataType = type == "img" ? "image.png" : "vdo.mp4"
     const response = await fetch(url);
     const blob = await response.blob();
     const file = new File([blob], dataType, { type: blob.type });
-    console.log(response);
+    if(type == "img"){
+      setImgFile(file)
+    }else{
+      setVdoFile(file)
+    }
     return file;
 }
 
@@ -69,8 +73,8 @@ function App() {
       // console.log(png);
       setPathImg(png);
       setPathVdo(mp4);
-      // await convertUrlToFile(png,'img');
-      // await convertUrlToFile(mp4,"vdo");
+      await convertUrlToFile(png,'img');
+      await convertUrlToFile(mp4,"vdo");
       // setLoading(false);
     } catch (error) {
       console.error(error);
@@ -81,16 +85,16 @@ function App() {
     const goData = async () => {
       try {
         await dataToApp();
-       
+
         setLoading(false);
       } catch (error) {
         console.error(error);
       }
     };
-  
+
     goData();
-  }, []); 
-  
+  }, []);
+
 
   const togglePopup = () => {
     setShare(!shareResult);
@@ -120,8 +124,8 @@ function App() {
     if (navigator.share) {
       navigator
         .share({
-          url: state,
-          title: "Sixsheet Photoshare",
+          files: mediaState == "img" ? [imgFile] : [vdoFile],
+          title: "SixsheetPhotoshare",
           text: "Beloved :)" // text
         })
         .then(() => {
@@ -195,7 +199,6 @@ function App() {
                           backgroundColor: "rgba(255, 255, 255, 0.5)",
                           backgroundImage: `url(${icon})`,
                           backgroundRepeat: "no-repeat",
-                          backgroundSize: "cover",
                           backgroundPosition: "center",
                           backgroundSize: "32%",
                         }}
@@ -232,7 +235,6 @@ function App() {
                           backgroundColor: "rgba(255, 255, 255, 0.5)",
                           backgroundImage: `url(${VDO})`,
                           backgroundRepeat: "no-repeat",
-                          backgroundSize: "cover",
                           backgroundPosition: "center",
                           backgroundSize: "32%",
                         }}
@@ -323,7 +325,7 @@ function App() {
 
                 <div className="overlay-box" style={{ paddingBottom: "50px" }}>
                   {shareResult && (
-                    <Box 
+                    <Box
                     className={"all-element-center share-data"}
                     >
                       <ShareSocial
@@ -349,7 +351,7 @@ function App() {
                     marginTop: "20px",
                   }}
                 >
-                  
+
                   <Button
                     className="save-popup-button"
                     onClick={() => {

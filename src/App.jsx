@@ -1,5 +1,5 @@
 import viteLogo from "/vite.svg";
-import { useState, useEffect  } from "react";
+import { useState, useEffect } from "react";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { lime, purple, red } from "@mui/material/colors";
 import { styled } from "@mui/material/styles";
@@ -46,7 +46,6 @@ function App() {
   const [pathVdo, setPathVdo] = useState("");
   const [shareResult, setShare] = useState(false);
 
-
   const dataToApp = async () => {
     try {
       const result = await axios.get(
@@ -55,18 +54,28 @@ function App() {
       console.log(result.data.data.source);
       const png = result.data.data.source[0].path;
       const mp4 = result.data.data.source[1].path;
-      console.log(png);
+      // console.log(png);
       setPathImg(png);
       setPathVdo(mp4);
-      setLoading(false);
+      // setLoading(false);
     } catch (error) {
-      console.error("Error fetching paths:", error);
+      console.error(error);
     }
   };
 
-  useEffect(async () => {
-    await dataToApp();
-  }, []);
+  useEffect(() => {
+    const goData = async () => {
+      try {
+        await dataToApp();
+        setLoading(false);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+  
+    goData();
+  }, []); 
+  
 
   const togglePopup = () => {
     setShare(!shareResult);
@@ -100,117 +109,129 @@ function App() {
           </Grid>
         </Box>
         <Box className={"box-test all-element-center"}>
-        {loading ? (
-                <ClipLoader color={"#123abc"} loading={loading} size={100}
-                className="all-element-center"
-                />
-              ) : (
-        <Grid>
-        <Box className="box-body all-element-center">
-        
-          <Grid
-            container
-            spacing={1}
-            className={"grid-body"}
-            size={{
-              xs: 3,
-              md: 3,
-            }}
-          >
-            <Box className={"grid-body3 all-element-center"}>
-              <div
-                style={{
-                  position: "relative",
-                  width: "160px",
-                  height: "230px",
-                  borderRadius: "20px",
-                  overflow: "hidden",
-                  border: "5px solid black",
-                }}
-              >
-                <img
-                onLoad={() => handleLoadImage("img1")}
-                  src={pathImg}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    // left:"15px"
+          {loading ? (
+            <ClipLoader
+              color={"#123abc"}
+              loading={loading}
+              size={100}
+              className="all-element-center"
+            />
+          ) : (
+            <Grid>
+              <Box className="box-body all-element-center">
+                <Grid
+                  container
+                  spacing={1}
+                  className={"grid-body"}
+                  size={{
+                    xs: 3,
+                    md: 3,
                   }}
-                />
-                <div
-                  onClick={() => handleImage(pathImg)}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    backgroundColor: "rgba(255, 255, 255, 0.5)",
-                    backgroundImage: `url(${icon})`,
-                    backgroundRepeat: "no-repeat",
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    backgroundSize: "32%",
+                >
+                  <Box className={"grid-body3 all-element-center"}>
+                    <div
+                      style={{
+                        position: "relative",
+                        width: "200px",
+                        height: "300px",
+                        borderRadius: "20px",
+                        overflow: "hidden",
+                        border: "5px solid black",
+                      }}
+                    >
+                      <img
+                      // onLoad={() => handleLoadImage("img1")}
+                        src={pathImg}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          // left:"15px"
+                        }}
+                      />
+                      <div
+                        onClick={() => handleImage(pathImg)}
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          height: "100%",
+                          backgroundColor: "rgba(255, 255, 255, 0.5)",
+                          backgroundImage: `url(${icon})`,
+                          backgroundRepeat: "no-repeat",
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                          backgroundSize: "32%",
+                        }}
+                      ></div>
+                    </div>
+                  </Box>
+                  <Box className={"grid-body3 all-element-center"}>
+                    <div
+                      style={{
+                        position: "relative",
+                        width: "200px",
+                        height: "300px",
+                        borderRadius: "20px",
+                        overflow: "hidden",
+                        border: "5px solid black",
+                      }}
+                    >
+                      <img
+                        src={pathImg}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                      <div
+                        onClick={() => handleVdo(pathVdo)}
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          height: "100%",
+                          backgroundColor: "rgba(255, 255, 255, 0.5)",
+                          backgroundImage: `url(${VDO})`,
+                          backgroundRepeat: "no-repeat",
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                          backgroundSize: "32%",
+                        }}
+                      ></div>
+                    </div>
+                  </Box>
+                </Grid>
+              </Box>
+              <Box className={"box-button all-element-center"}>
+                <Grid
+                  container
+                  spacing={1}
+                  className={"grid-body"}
+                  size={{
+                    xs: 3,
+                    md: 3,
                   }}
-                ></div>
-              </div>
-            </Box>
-            <Box className={"grid-body3 all-element-center"}>
-              <div
-                style={{
-                  position: "relative",
-                  width: "160px",
-                  height: "230px",
-                  borderRadius: "20px",
-                  overflow: "hidden",
-                  border: "5px solid black",
-                }}
-              >
-                <img
-                  src={pathImg}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
-                />
-                <div
-                  onClick={() => handleVdo(pathVdo)}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    backgroundColor: "rgba(255, 255, 255, 0.5)",
-                    backgroundImage: `url(${VDO})`,
-                    backgroundRepeat: "no-repeat",
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    backgroundSize: "32%",
-                  }}
-                ></div>
-              </div>
-            </Box>
-          </Grid>
-        </Box>
-        <Box className={"box-button all-element-center"}>
-          <Grid
-            container
-            spacing={1}
-            className={"grid-body"}
-            size={{
-              xs: 3,
-              md: 3,
-            }}
-          >
-            <Box onClick={() => handleImage(pathImg)} className={"box-img-button"}>Image</Box>
-            <Box onClick={() => handleVdo(pathVdo)} className={"box-Vdo-button"}>video</Box>
-          </Grid>
-        </Box>
-        </Grid>
-         )}
+                >
+                  <Box
+                    onClick={() => handleImage(pathImg)}
+                    className={"box-img-button"}
+                  >
+                    Image
+                  </Box>
+                  <Box
+                    onClick={() => handleVdo(pathVdo)}
+                    className={"box-Vdo-button"}
+                  >
+                    Video
+                  </Box>
+                </Grid>
+              </Box>
+            </Grid>
+          )}
         </Box>
         <Box className="all-element-center">
           <Modal
@@ -226,6 +247,7 @@ function App() {
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
+                  // top: "150px",
                   height: "100vh",
                   width: "100vw",
                   position: "fixed",
@@ -238,7 +260,7 @@ function App() {
                     style={{
                       maxHeight: "72%",
                       maxWidth: "72%",
-                      marginTop: "120px",
+                      marginTop: "150px",
                     }}
                   />
                 ) : image ? (
@@ -250,17 +272,19 @@ function App() {
                       maxWidth: "68%",
                       marginTop: "120px",
                       borderTop: "5px solid Darkgray",
-    borderLeft: "8px solid Darkgray", 
-    borderRight: "5px solid Darkgray",
+                      borderLeft: "8px solid Darkgray",
+                      borderRight: "5px solid Darkgray",
                     }}
                   />
                 ) : (
-                  <div>No content available</div>
+                  <div></div>
                 )}
 
                 <div class="overlay-box" style={{ paddingBottom: "50px" }}>
                   {shareResult && (
-                    <div>
+                    <Box 
+                    className={"all-element-center share-data"}
+                    >
                       <ShareSocial
                         url={image || vdo}
                         onSocialButtonClicked={(data) => console.log(data)}
@@ -270,9 +294,9 @@ function App() {
                           "reddit",
                           "linkedin",
                         ]}
-                        className={"share"}
+                        // className={"share-data"}
                       />
-                    </div>
+                    </Box>
                   )}
                 </div>
 
@@ -306,14 +330,14 @@ function App() {
                     <img
                       src={save}
                       alt="Selected"
-                      style={{ maxHeight: "100px", maxWidth: "100px" }}
+                      style={{ maxHeight: "140px", maxWidth: "140px" }}
                     />
                   </Button>
                   <Button className="share-popup-button" onClick={togglePopup}>
                     <img
                       src={share}
                       alt="Selected"
-                      style={{ maxHeight: "52px", maxWidth: "52px" }}
+                      style={{ maxHeight: "68px", maxWidth: "68px" }}
                     />
                   </Button>
                 </Box>
@@ -327,3 +351,5 @@ function App() {
 }
 
 export default App;
+
+

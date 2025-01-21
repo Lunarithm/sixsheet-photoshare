@@ -115,19 +115,19 @@ button:focus-visible {
 }
 
 .frontProp{
-  font-size: 24px;
+  font-size: 32px;
   font-family: Baloo Bhai;
   font-weight: 700
 }
 
 .close-popup-button {
   position: absolute;
-  top: -438px;
-  left: -50px;
+  top: -550px;
+  left: -72px;
   /* padding: 10px; */
   color: white !important;
   border: none;
-  font-size: 22px !important;
+  font-size: 32px !important;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -172,36 +172,31 @@ button:focus-visible {
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100px;
+  height: 100px;
 }
 
-.share-data{
-  background: linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%);
-  border-radius: 3;
-  border: 0;
-  box-shadow: 0 3px 5px 2px rgba(255, 105, 135, .3);
-  color: white;
-  border: 1px solid blue;
-    
-    color: aquamarine;
-    font-style: italic;
-}
+.share-data {
+  width: 300px;
+  height: 200px;
+ }
 
 .box-button{
   height: 1;
   width: 1;
   /* background-color: aqua; */
-  font-size: 16px;
+  font-size: 24px;
   margin: 10px;
 }
 
 .box-img-button{
-  margin-right:58px;
+  margin-right:72px;
   font-family: Nunito;
   font-weight: 700
 }
 
 .box-Vdo-button{
-  margin-left: 58px;
+  margin-left: 72px;
   font-family: Nunito;
   font-weight: 700
 }
@@ -210,6 +205,6 @@ button:focus-visible {
   height: 1;
   width: 1;
   /* background-color: aqua; */
-  font-size: 16px;
-  padding-top: 100px;
+  font-size: 24px;
+  padding-top: 124px;
 }

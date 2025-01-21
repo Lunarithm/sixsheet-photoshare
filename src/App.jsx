@@ -155,7 +155,7 @@ function App() {
                 <Grid
                   container
                   spacing={1}
-                  className={"grid-body"}
+                  className={"grid-body all-element-center"}
                   size={{
                     xs: 3,
                     md: 3,
@@ -165,8 +165,8 @@ function App() {
                     <div
                       style={{
                         position: "relative",
-                        width: "200px",
-                        height: "300px",
+                        width: "180px",
+                        height: "250px",
                         borderRadius: "20px",
                         overflow: "hidden",
                         border: "5px solid black",
@@ -204,8 +204,8 @@ function App() {
                     <div
                       style={{
                         position: "relative",
-                        width: "200px",
-                        height: "300px",
+                        width: "180px",
+                        height: "250px",
                         borderRadius: "20px",
                         overflow: "hidden",
                         border: "5px solid black",
@@ -285,7 +285,9 @@ function App() {
                   width: "100vw",
                   position: "fixed",
                 }}
-              >
+              ><Button className="close-popup-button" onClick={handleClose}>
+              ✖
+            </Button>
                 {vdo ? (
                   <ReactPlayer
                     url={vdo}
@@ -293,7 +295,7 @@ function App() {
                     style={{
                       maxHeight: "72%",
                       maxWidth: "72%",
-                      marginTop: "150px",
+                      // marginTop: "150px",
                     }}
                   />
                 ) : image ? (
@@ -303,7 +305,7 @@ function App() {
                     style={{
                       maxHeight: "68%",
                       maxWidth: "68%",
-                      marginTop: "120px",
+                      // marginTop: "120px",
                       borderTop: "5px solid Darkgray",
                       borderLeft: "8px solid Darkgray",
                       borderRight: "5px solid Darkgray",
@@ -341,9 +343,7 @@ function App() {
                     marginTop: "20px",
                   }}
                 >
-                  <Button className="close-popup-button" onClick={handleClose}>
-                    ✖
-                  </Button>
+                  
                   <Button
                     className="save-popup-button"
                     onClick={() => {

@@ -121,9 +121,9 @@ button:focus-visible {
 }
 
 .close-popup-button {
-  position: absolute;
-  top: -550px;
-  left: -72px;
+  position: fixed; 
+  top: -1px;
+  left: -150px;
   /* padding: 10px; */
   color: white !important;
   border: none;
@@ -139,7 +139,7 @@ button:focus-visible {
 .save-popup-button {
   position: absolute;
   top: -16px;
-  left: -66px;
+  left: -26px;
   color: white !important;
   border: none;
   font-size: 22px !important;
@@ -206,5 +206,5 @@ button:focus-visible {
   width: 1;
   /* background-color: aqua; */
   font-size: 24px;
-  padding-top: 124px;
+  padding-top: 200px;
 }

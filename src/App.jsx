@@ -45,7 +45,8 @@ function App() {
   const [pathImg, setPathImg] = useState("");
   const [pathVdo, setPathVdo] = useState("");
   const [shareResult, setShare] = useState(false);
-
+  const [mediaState,setMediaState] = useState("web");
+ 
   const dataToApp = async () => {
     try {
       const result = await axios.get(
@@ -90,12 +91,30 @@ function App() {
 
   const handleImage = (value) => {
     setImage(value);
+    setMediaState("img");
     setOpen(true);
   };
 
   const handleVdo = (value) => {
     setVdo(value);
+    setMediaState("vdo");
     setOpen(true);
+  };
+
+  const handleShareClick = () => {
+    const state = mediaState == 'img' ? image : vdo;
+    if (navigator.share) {
+      navigator
+        .share({
+          url: state,
+        })
+        .then(() => {
+          console.log("Successfully shared");
+        })
+        .catch((error) => {
+          console.error("Something went wrong", error);
+        });
+    }
   };
 
   return (
@@ -333,7 +352,7 @@ function App() {
                       style={{ maxHeight: "140px", maxWidth: "140px" }}
                     />
                   </Button>
-                  <Button className="share-popup-button" onClick={togglePopup}>
+                  <Button className="share-popup-button" onClick={handleShareClick}>
                     <img
                       src={share}
                       alt="Selected"

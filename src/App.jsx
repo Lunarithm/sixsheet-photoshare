@@ -295,13 +295,6 @@ function App() {
                     url={vdo}
                     controls={true}
                     loop={true}
-                    style={{
-                      maxHeight: "72%",
-                      maxWidth: "72%",
-                      position: "relative",
-                      zIdex: 99999
-                      // marginTop: "150px",
-                    }}
                   />
                 ) : image ? (
                   <img

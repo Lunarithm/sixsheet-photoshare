@@ -42,6 +42,8 @@ function App() {
   const [open, setOpen] = useState(false);
   const [image, setImage] = useState(null);
   const [vdo, setVdo] = useState(null);
+  const [imgFile,setImgFile] = useState(null);
+  const [vdoFile,setVdoFile] = useState(null);
   const [pathImg, setPathImg] = useState("");
   const [pathVdo, setPathVdo] = useState("");
   const [shareResult, setShare] = useState(false);
@@ -52,7 +54,7 @@ function App() {
     const response = await fetch(url);
     const blob = await response.blob();
     const file = new File([blob], dataType, { type: blob.type });
-    console.log(url);
+    console.log(response);
     return file;
 }
 
@@ -61,14 +63,14 @@ function App() {
       const result = await axios.get(
         `https://apihub.sixsheet.me/media/${shortUUID}`
       );
-      console.log(result.data.data.source);
+      // console.log(result.data.data.source);
       const png = result.data.data.source[0].path;
       const mp4 = result.data.data.source[1].path;
       // console.log(png);
       setPathImg(png);
       setPathVdo(mp4);
-      await convertUrlToFile(png,'img');
-      await convertUrlToFile(mp4,"vdo");
+      // await convertUrlToFile(png,'img');
+      // await convertUrlToFile(mp4,"vdo");
       // setLoading(false);
     } catch (error) {
       console.error(error);
@@ -118,7 +120,7 @@ function App() {
     if (navigator.share) {
       navigator
         .share({
-          file: [state],
+          url: state,
           title: "Sixsheet Photoshare",
           text: "Beloved :)" // text
         })
@@ -315,14 +317,14 @@ function App() {
                   <div></div>
                 )}
 
-                <div class="overlay-box" style={{ paddingBottom: "50px" }}>
+                <div className="overlay-box" style={{ paddingBottom: "50px" }}>
                   {shareResult && (
                     <Box 
                     className={"all-element-center share-data"}
                     >
                       <ShareSocial
                         url={image || vdo}
-                        onSocialButtonClicked={(data) => console.log(data)}
+                        // onSocialButtonClicked={(data) => console.log(data)}
                         socialTypes={[
                           "facebook",
                           "twitter",

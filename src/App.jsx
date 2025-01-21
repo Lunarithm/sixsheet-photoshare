@@ -296,6 +296,7 @@ function App() {
                     controls={true}
                     playing={true}
                     loop={true}
+                    playsinline={true}
                     style={{
                       maxHeight: "72%",
                       maxWidth: "72%",

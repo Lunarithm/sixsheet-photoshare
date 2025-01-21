@@ -298,7 +298,7 @@ function App() {
                     style={{
                       maxHeight: "72%",
                       maxWidth: "72%",
-                      position: "relative",
+                      position: "absolute",
                       zIdex: 99999
                       // marginTop: "150px",
                     }}
@@ -349,7 +349,7 @@ function App() {
                   }}
                 >
                   
-                  <Button
+                  {/* <Button
                     className="save-popup-button"
                     onClick={() => {
                       if (image) {
@@ -377,7 +377,7 @@ function App() {
                       alt="Selected"
                       style={{ maxHeight: "68px", maxWidth: "68px" }}
                     />
-                  </Button>
+                  </Button> */}
                 </Box>
               </Box>
             </Fade>

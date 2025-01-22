@@ -48,7 +48,8 @@ function App() {
 
   async function convertUrlToFile(url,type) {
     const dataType = type == "img" ? "image.png" : "vdo.mp4"
-    const response = await fetch(url,{mode: 'cors',});
+    const response = await fetch(url,{method: 'GET',
+      mode: 'cors'});
     const blob = await response.blob();
     const file = new File([blob], dataType, { type: blob.type });
     if(type == "img"){

@@ -49,12 +49,7 @@ function App() {
 
   async function convertUrlToFile(url,type) {
     const dataType = type == "img" ? "image.png" : "vdo.mp4"
-    const response = await fetch(url,{headers: {
-        'Cache-Control': 'no-cache',
-        'pragma': 'no-cache'
-
-      },
-    mode:'no-cors'});
+    const response = await fetch(url);
     const blob = await response.blob();
     const file = new File([blob], dataType, { type: blob.type });
     if (type == "img") {
@@ -121,15 +116,14 @@ function App() {
     setOpen(true);
   };
 
-  const handleShareClick = () => {
+  const handleShareClick = async () => {
     const state = mediaState == "img" ? image : vdo;
     console.log(vdoFile);
     if (navigator.share) {
-      navigator
+      await navigator
         .share({
-          files: [vdoFile],
-          title: "SixsheetPhotoshare",
-          text: "Beloved :)", // text
+          files: mediaState == 'img' ? [imgFile] : [vdoFile],
+          title: "SixsheetPhotoshare"
         })
         .then(() => {
           console.log("Successfully shared");

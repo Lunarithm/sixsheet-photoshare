@@ -49,8 +49,17 @@ function App() {
 
   async function convertUrlToFile(url,type) {
     const dataType = type == "img" ? "png" : "mp4"
-    const response = await fetch(url);
-    const blob = await response.blob();
+    // const response = await fetch(url,{mode: "cors"});
+    const response = await axios.get(url, {
+      responseType: 'blob',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    })
+    console.log(response.data)
+    const blob = await response.data;
     const file = new File([blob], 'media.'+dataType, { type: blob.type });
     if (type == "img") {
       setImgFile(file);

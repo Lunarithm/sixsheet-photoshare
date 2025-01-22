@@ -48,10 +48,10 @@ function App() {
   const [mediaState, setMediaState] = useState("web");
 
   async function convertUrlToFile(url,type) {
-    const dataType = type == "img" ? "image.png" : "vdo.mp4"
+    const dataType = type == "img" ? "png" : "mp4"
     const response = await fetch(url);
     const blob = await response.blob();
-    const file = new File([blob], dataType, { type: blob.type });
+    const file = new File([blob], 'media.'+dataType, { type: blob.type });
     if (type == "img") {
       setImgFile(file);
     } else {
@@ -122,7 +122,6 @@ function App() {
     if (navigator.share) {
       await navigator
         .share({
-          url: mediaState == 'img' ? image : vdo,
           files: mediaState == 'img' ? [imgFile] : [vdoFile],
           title: "SixsheetPhotoshare"
         })

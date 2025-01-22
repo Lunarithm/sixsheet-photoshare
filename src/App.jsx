@@ -131,8 +131,7 @@ function App() {
     if (navigator.share) {
       await navigator
         .share({
-          files: mediaState == 'img' ? [imgFile] : [vdoFile],
-          title: "SixsheetPhotoshare"
+          files: mediaState == 'img' ? [imgFile] : [vdoFile]
         })
         .then(() => {
           console.log("Successfully shared");

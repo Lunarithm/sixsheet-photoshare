@@ -47,9 +47,14 @@ function App() {
   const [shareResult, setShare] = useState(false);
   const [mediaState, setMediaState] = useState("web");
 
-  async function convertUrlToFile(url, type) {
-    const dataType = type == "img" ? "image.png" : "vdo.mp4";
-    const response = await fetch(url);
+  async function convertUrlToFile(url,type) {
+    const dataType = type == "img" ? "image.png" : "vdo.mp4"
+    const response = await fetch(url,{headers: {
+        'Cache-Control': 'no-cache',
+        'pragma': 'no-cache'
+
+      },
+    mode:'no-cors'});
     const blob = await response.blob();
     const file = new File([blob], dataType, { type: blob.type });
     if (type == "img") {
@@ -130,7 +135,7 @@ function App() {
           console.log("Successfully shared");
         })
         .catch((error) => {
-          console.error("Something went wrong", error);
+          alert(error);
         });
     }
   };

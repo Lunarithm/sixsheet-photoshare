@@ -190,13 +190,13 @@ button:focus-visible {
 }
 
 .box-img-button{
-  margin-right:72px;
+  margin-right: 40px;
   font-family: Nunito;
   font-weight: 700
 }
 
 .box-Vdo-button{
-  margin-left: 72px;
+  margin-left: 40px;
   font-family: Nunito;
   font-weight: 700
 }

@@ -29,6 +29,7 @@ import ReactPlayer from "react-player";
 import { ShareSocial } from "react-share-social";
 import axios from "axios";
 import ClipLoader from "react-spinners/ClipLoader";
+import { saveAs } from "file-saver";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -39,25 +40,25 @@ function App() {
   const [open, setOpen] = useState(false);
   const [image, setImage] = useState(null);
   const [vdo, setVdo] = useState(null);
-  const [imgFile,setImgFile] = useState(null);
-  const [vdoFile,setVdoFile] = useState(null);
+  const [imgFile, setImgFile] = useState(null);
+  const [vdoFile, setVdoFile] = useState(null);
   const [pathImg, setPathImg] = useState("");
   const [pathVdo, setPathVdo] = useState("");
   const [shareResult, setShare] = useState(false);
-  const [mediaState,setMediaState] = useState("web");
+  const [mediaState, setMediaState] = useState("web");
 
-  async function convertUrlToFile(url,type) {
-    const dataType = type == "img" ? "image.png" : "vdo.mp4"
+  async function convertUrlToFile(url, type) {
+    const dataType = type == "img" ? "image.png" : "vdo.mp4";
     const response = await fetch(url);
     const blob = await response.blob();
     const file = new File([blob], dataType, { type: blob.type });
-    if(type == "img"){
-      setImgFile(file)
-    }else{
-      setVdoFile(file)
+    if (type == "img") {
+      setImgFile(file);
+    } else {
+      setVdoFile(file);
     }
     return file;
-}
+  }
 
   const dataToApp = async () => {
     try {
@@ -70,8 +71,8 @@ function App() {
       // console.log(png);
       setPathImg(png);
       setPathVdo(mp4);
-      await convertUrlToFile(png,'img');
-      await convertUrlToFile(mp4,"vdo");
+      await convertUrlToFile(png, "img");
+      await convertUrlToFile(mp4, "vdo");
       // setLoading(false);
     } catch (error) {
       console.error(error);
@@ -91,7 +92,6 @@ function App() {
 
     goData();
   }, []);
-
 
   const togglePopup = () => {
     setShare(!shareResult);
@@ -117,14 +117,14 @@ function App() {
   };
 
   const handleShareClick = () => {
-    const state = mediaState == 'img' ? image : vdo;
-    console.log(vdoFile)
+    const state = mediaState == "img" ? image : vdo;
+    console.log(vdoFile);
     if (navigator.share) {
       navigator
         .share({
           files: [vdoFile],
           title: "SixsheetPhotoshare",
-          text: "Beloved :)" // text
+          text: "Beloved :)", // text
         })
         .then(() => {
           console.log("Successfully shared");
@@ -169,15 +169,15 @@ function App() {
                     <div
                       style={{
                         position: "relative",
-                        width: "180px",
-                        height: "250px",
+                        width: "150px",
+                        height: "200px",
                         borderRadius: "20px",
                         overflow: "hidden",
                         border: "5px solid black",
                       }}
                     >
                       <img
-                      // onLoad={() => handleLoadImage("img1")}
+                        // onLoad={() => handleLoadImage("img1")}
                         src={pathImg}
                         style={{
                           width: "100%",
@@ -207,8 +207,8 @@ function App() {
                     <div
                       style={{
                         position: "relative",
-                        width: "180px",
-                        height: "250px",
+                        width: "150px",
+                        height: "200px",
                         borderRadius: "20px",
                         overflow: "hidden",
                         border: "5px solid black",
@@ -287,9 +287,10 @@ function App() {
                   width: "100vw",
                   position: "fixed",
                 }}
-              ><Button className="close-popup-button" onClick={handleClose}>
-              ✖
-            </Button>
+              >
+                <Button className="close-popup-button" onClick={handleClose}>
+                  ✖
+                </Button>
                 {vdo ? (
                   <ReactPlayer
                     url={vdo}
@@ -299,7 +300,7 @@ function App() {
                       maxHeight: "72%",
                       maxWidth: "72%",
                       position: "relative",
-                      zIdex: 99999
+                      zIdex: 99999,
                       // marginTop: "150px",
                     }}
                   />
@@ -322,9 +323,7 @@ function App() {
 
                 <div className="overlay-box" style={{ paddingBottom: "50px" }}>
                   {shareResult && (
-                    <Box
-                    className={"all-element-center share-data"}
-                    >
+                    <Box className={"all-element-center share-data"}>
                       <ShareSocial
                         url={image || vdo}
                         // onSocialButtonClicked={(data) => console.log(data)}
@@ -348,20 +347,13 @@ function App() {
                     marginTop: "20px",
                   }}
                 >
-
                   <Button
                     className="save-popup-button"
                     onClick={() => {
                       if (image) {
-                        const link = document.createElement("a");
-                        link.href = image;
-                        link.download = "image";
-                        link.click();
+                        saveAs(image, "image.png");
                       } else if (vdo) {
-                        const link = document.createElement("a");
-                        link.href = vdo;
-                        link.download = "video";
-                        link.click();
+                        saveAs(vdo, "video.mp4");
                       }
                     }}
                   >
@@ -371,7 +363,10 @@ function App() {
                       style={{ maxHeight: "140px", maxWidth: "140px" }}
                     />
                   </Button>
-                  <Button className="share-popup-button" onClick={handleShareClick}>
+                  <Button
+                    className="share-popup-button"
+                    onClick={handleShareClick}
+                  >
                     <img
                       src={share}
                       alt="Selected"
@@ -389,5 +384,3 @@ function App() {
 }
 
 export default App;
-
-

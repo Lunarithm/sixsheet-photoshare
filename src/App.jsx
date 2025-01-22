@@ -122,6 +122,7 @@ function App() {
     if (navigator.share) {
       await navigator
         .share({
+          url: mediaState == 'img' ? image : vdo,
           files: mediaState == 'img' ? [imgFile] : [vdoFile],
           title: "SixsheetPhotoshare"
         })

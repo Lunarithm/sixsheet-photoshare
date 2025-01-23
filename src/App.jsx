@@ -329,7 +329,7 @@ function App() {
                   <div></div>
                 )}
 
-                <div className="overlay-box" style={{ paddingBottom: "50px" }}>
+                {/* <div className="overlay-box" style={{ paddingBottom: "50px" }}>
                   {shareResult && (
                     <Box className={"all-element-center share-data"}>
                       <ShareSocial
@@ -345,7 +345,7 @@ function App() {
                       />
                     </Box>
                   )}
-                </div>
+                </div> */}
 
                 <Box
                   style={{
@@ -359,9 +359,9 @@ function App() {
                     className="save-popup-button"
                     onClick={() => {
                       if (image) {
-                        saveAs(image, "image.png");
+                        saveAs(imgFile, "image.png");
                       } else if (vdo) {
-                        saveAs(vdo, "video.mp4");
+                        saveAs(vdoFile, "video.mp4");
                       }
                     }}
                   >

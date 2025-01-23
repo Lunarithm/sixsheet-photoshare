@@ -359,9 +359,9 @@ function App() {
                     className="save-popup-button"
                     onClick={() => {
                       if (image) {
-                        saveAs(image, "image.png");
+                        saveAs(imgFile, "image.png");
                       } else if (vdo) {
-                        saveAs(vdo, "video.mp4");
+                        saveAs(vdoFile, "video.mp4");
                       }
                     }}
                   >

@@ -44,6 +44,7 @@ function App() {
   const [vdoFile, setVdoFile] = useState(null);
   const [pathImg, setPathImg] = useState("");
   const [pathVdo, setPathVdo] = useState("");
+  const [pathThn, setPathThn] = useState("");
   const [shareResult, setShare] = useState(false);
   const [mediaState, setMediaState] = useState("web");
 
@@ -78,11 +79,14 @@ function App() {
       // console.log(result.data.data.source);
       const png = result.data.data.source[0].path;
       const mp4 = result.data.data.source[1].path;
+      const thumpnail = result.data.data.source[2].path;
       // console.log(png);
       setPathImg(png);
       setPathVdo(mp4);
+      setPathThn(thumpnail)
       await convertUrlToFile(png, "img");
       await convertUrlToFile(mp4, "vdo");
+      await convertUrlToFile(thumpnail, "img");
       // setLoading(false);
     } catch (error) {
       console.error(error);
@@ -223,7 +227,7 @@ function App() {
                       }}
                     >
                       <img
-                        src={pathImg}
+                        src={pathThn}
                         style={{
                           width: "100%",
                           height: "100%",

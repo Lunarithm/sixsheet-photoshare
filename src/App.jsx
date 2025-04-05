@@ -62,7 +62,7 @@ function App() {
     console.log(response.data)
     const blob = await response.data;
     const file = new File([blob], 'media.'+dataType, { type: blobType });
-    if (type == "img") {d
+    if (type == "img") {
       setImgFile(file);
     } else {
       setVdoFile(file);

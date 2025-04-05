@@ -35,7 +35,6 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   const { shortUUID } = useParams();
-  console.log(shortUUID);
 
   const [open, setOpen] = useState(false);
   const [image, setImage] = useState(null);
@@ -50,7 +49,7 @@ function App() {
 
   async function convertUrlToFile(url,type) {
     const dataType = type == "img" ? "png" : "mp4";
-    const blobType = type == "img" ? "image/png" : "video/mp4"
+    const blobType = type == "img" ? "image/jpg" : "video/mp4"
     // const response = await fetch(url,{mode: "cors"});
     const response = await axios.get(url, {
       responseType: 'blob',
@@ -63,7 +62,7 @@ function App() {
     console.log(response.data)
     const blob = await response.data;
     const file = new File([blob], 'media.'+dataType, { type: blobType });
-    if (type == "img") {
+    if (type == "img") {d
       setImgFile(file);
     } else {
       setVdoFile(file);
@@ -79,14 +78,14 @@ function App() {
       // console.log(result.data.data.source);
       const png = result.data.data.source[0].path;
       const mp4 = result.data.data.source[1].path;
-      const thumpnail = result.data.data.source[2].path;
+      const thumbnail = result.data.data.source[2].path;
       // console.log(png);
       setPathImg(png);
       setPathVdo(mp4);
-      setPathThn(thumpnail)
+      setPathThn(thumbnail)
       await convertUrlToFile(png, "img");
       await convertUrlToFile(mp4, "vdo");
-      await convertUrlToFile(thumpnail, "img");
+      // await convertUrlToFile(thumbnail, "img");
       // setLoading(false);
     } catch (error) {
       console.error(error);
@@ -132,7 +131,6 @@ function App() {
 
   const handleShareClick = async () => {
     const state = mediaState == "img" ? image : vdo;
-    console.log(vdoFile);
     if (navigator.share) {
       await navigator
         .share({

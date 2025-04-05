@@ -154,7 +154,7 @@ function App() {
         <Box className={"box-head"}>
           <Grid className={"position-header grid-head frontProp"}>
             {/* <h1>{shortUUID}</h1> */}
-            CheesePlease
+            SX.Autobooth
           </Grid>
         </Box>
         <Box className={"box-test all-element-center"}>

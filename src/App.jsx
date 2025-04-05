@@ -48,7 +48,7 @@ function App() {
   const [mediaState, setMediaState] = useState("web");
 
   async function convertUrlToFile(url,type) {
-    const dataType = type == "img" ? "png" : "mp4";
+    const dataType = type == "img" ? "jpg" : "mp4";
     const blobType = type == "img" ? "image/jpg" : "video/mp4"
     // const response = await fetch(url,{mode: "cors"});
     const response = await axios.get(url, {
@@ -361,7 +361,7 @@ function App() {
                     className="save-popup-button"
                     onClick={() => {
                       if (image) {
-                        saveAs(imgFile, "image.png");
+                        saveAs(imgFile, "image.jpg");
                       } else if (vdo) {
                         saveAs(vdoFile, "video.mp4");
                       }

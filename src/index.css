@@ -75,6 +75,7 @@ button:focus-visible {
 
 .box-head{
   height: 1;
+  color: #F4F0D3 !important;
   /* padding-left: 10; */
 }
 
@@ -86,7 +87,7 @@ button:focus-visible {
 
 .grid-head {
   height: 60px;
-  background-color: #ffd700;
+  background-color: #4BAE4D;
   padding-left: 20px;
 }
 

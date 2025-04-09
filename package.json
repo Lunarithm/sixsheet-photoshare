@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-   "dev": "vite --hosts",
-  "build": "vite build",
-  "start": "vite preview",
-  "preview": "vite preview"
+    "dev": "vite --hosts",
+    "build": "vite build",
+    "start": "vite preview",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

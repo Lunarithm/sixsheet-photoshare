@@ -78,11 +78,14 @@ function App() {
       // console.log(result.data.data.source);
       const png = result.data.data.source[0].path;
       const mp4 = result.data.data.source[1].path;
-      // const thumbnail = result.data.data.source[2].path;
-      // console.log(png);
       setPathImg(png);
       setPathVdo(mp4);
-      // setPathThn(thumbnail);
+      if(result.data.data.source[2].path){
+        const thumbnail = result.data.data.source[2].path;
+      console.log(thumbnail);
+        setPathThn(thumbnail);
+      }
+      setPathThn(null);
       await convertUrlToFile(png, "img");
       await convertUrlToFile(mp4, "vdo");
       // await convertUrlToFile(thumbnail, "img");
@@ -223,15 +226,21 @@ function App() {
                         overflow: "hidden",
                         border: "5px solid black",
                       }}
-                    >
-                      <img
-                        src={pathImg}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
+                    >{pathThn ? (<img
+                      src={pathThn}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />):(<img
+                      src={pathImg}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />)}
                       <div
                         onClick={() => handleVdo(pathVdo)}
                         style={{

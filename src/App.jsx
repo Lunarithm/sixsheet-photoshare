@@ -84,7 +84,6 @@ function App() {
       setPathVdo(mp4);
       if (result.data.data.source[2].path) {
         const thumbnail = result.data.data.source[2].path;
-        console.log(thumbnail);
         setPathThn(thumbnail);
       }else{
         setPathThn(png);

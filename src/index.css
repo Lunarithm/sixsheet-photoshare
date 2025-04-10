@@ -123,19 +123,20 @@ button:focus-visible {
 
 .close-popup-button {
   position: absolute;
-  color: Black !important;
+  color: black !important;
   border: none;
-  font-size: 16px !important;
+  font-size: 20px !important;
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1100;
   outline: none !important;
-  border-radius: 60% !important;
-  background-color: #E5F575!important;
-  height: 60px !important;
-  width: 20px !important;
-  padding-bottom: "10px" !important;
+  border-radius: 50% !important;
+  background-color: #E5F575 !important;
+  width: 44px !important;  /* ขนาดเล็กลง */
+  height: 44px !important;
+  padding: 0 !important;
+  min-width: unset !important;  /* ยกเลิกขนาดขั้นต่ำ */
 }
 
 .save-popup-button {

@@ -80,9 +80,9 @@ function App() {
       const mp4 = result.data.data.source[1].path;
       setPathImg(png);
       setPathVdo(mp4);
-      if(result.data.data.source[2].path){
+      if (result.data.data.source[2].path) {
         const thumbnail = result.data.data.source[2].path;
-      console.log(thumbnail);
+        console.log(thumbnail);
         setPathThn(thumbnail);
       }
       setPathThn(null);
@@ -226,21 +226,26 @@ function App() {
                         overflow: "hidden",
                         border: "5px solid black",
                       }}
-                    >{pathThn ? (<img
-                      src={pathThn}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />):(<img
-                      src={pathImg}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />)}
+                    >
+                      {pathThn ? (
+                        <img
+                          src={pathThn}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      ) : (
+                        <img
+                          src={pathImg}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      )}
                       <div
                         onClick={() => handleVdo(pathVdo)}
                         style={{
@@ -305,7 +310,7 @@ function App() {
                 }}
               >
                 <Box
-                onClick={handleClose}
+                  onClick={handleClose}
                   sx={{
                     flex: 1,
                     display: "flex",
@@ -324,15 +329,22 @@ function App() {
                     justifyContent: "center",
                     backgroundColor: "rgba(0, 0, 0, 0.3)",
                     backdropFilter: "blur(6px)",
+                    position:
+                      "relative",
                   }}
                 >
                   <Button
                     className="close-popup-button"
                     onClick={handleClose}
+                    sx={{
+                      position: "absolute",
+                      top: "120px" ,
+                      left: "30px"
+                    }}
                   >
                     ✖
                   </Button>
-                  <br/>
+                  <br />
                   {vdo ? (
                     <ReactPlayer
                       url={vdo}
@@ -399,7 +411,7 @@ function App() {
                   </Box>
                 </Box>
                 <Box
-                onClick={handleClose}
+                  onClick={handleClose}
                   sx={{
                     flex: 1,
                     display: "flex",

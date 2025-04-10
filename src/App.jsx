@@ -59,9 +59,8 @@ function App() {
         Expires: "0",
       },
     });
-    console.log(response.data);
     const blob = await response.data;
-    const file = new File([blob], "media." + dataType, { type: blobType });
+    const file = new File([blob], `media_${shortUUID}.` + dataType, { type: blobType });
     if (type == "img") {
       setImgFile(file);
     } else {
@@ -80,12 +79,13 @@ function App() {
       const mp4 = result.data.data.source[1].path;
       setPathImg(png);
       setPathVdo(mp4);
-      if (result.data.data.source[2].path) {
+      if (result?.data?.data?.source[2]?.path) {
         const thumbnail = result.data.data.source[2].path;
-        console.log(thumbnail);
         setPathThn(thumbnail);
+      }else{
+        setPathThn(png);
       }
-      setPathThn(null);
+     
       await convertUrlToFile(png, "img");
       await convertUrlToFile(mp4, "vdo");
       // await convertUrlToFile(thumbnail, "img");
@@ -134,18 +134,19 @@ function App() {
 
   const handleShareClick = async () => {
     const state = mediaState == "img" ? image : vdo;
-    if (navigator.share) {
-      await navigator
-        .share({
-          files: mediaState == "img" ? [imgFile] : [vdoFile],
-        })
-        .then(() => {
-          console.log("Successfully shared");
-        })
-        .catch((error) => {
-          alert(error);
-        });
-    }
+      if (navigator.share) {
+        await navigator
+          .share({
+            files: mediaState == "img" ? [imgFile] : [vdoFile],
+          })
+          .then(() => {
+            console.log("Successfully shared");
+          })
+          .catch((error) => {
+            alert(error);
+          });
+      }
+   
   };
 
   return (
@@ -386,9 +387,9 @@ function App() {
                       className="save-popup-button"
                       onClick={() => {
                         if (image) {
-                          saveAs(imgFile, "image.jpg");
+                          saveAs(imgFile, `image_${shortUUID}.jpg`);
                         } else if (vdo) {
-                          saveAs(vdoFile, "video.mp4");
+                          saveAs(vdoFile, `video_${shortUUID}.mp4`);
                         }
                       }}
                     >

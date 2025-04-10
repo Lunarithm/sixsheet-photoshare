@@ -61,7 +61,7 @@ function App() {
     });
     console.log(response.data);
     const blob = await response.data;
-    const file = new File([blob], 'media.'+dataType, { type: blobType });
+    const file = new File([blob], `media_${shortUUID}.`+dataType, { type: blobType });
     if (type == "img") {
       setImgFile(file);
     } else {
@@ -86,8 +86,10 @@ function App() {
         const thumbnail = result.data.data.source[2].path;
         console.log(thumbnail);
         setPathThn(thumbnail);
+      }else{
+        setPathThn(png);
       }
-      setPathThn(null);
+      
       await convertUrlToFile(png, "img");
       await convertUrlToFile(mp4, "vdo");
       // await convertUrlToFile(thumbnail, "img");
@@ -152,83 +154,84 @@ function App() {
 
   return (
     <ThemeProvider theme={theme}>
-      <CssBaseline enableColorScheme />
-      <Container maxWidth={false} disableGutters component="main">
-        <Box className={"box-head"}>
-          <Grid className={"position-header grid-head frontProp"}>
-            {/* <h1>{shortUUID}</h1> */}
-            SX.Autobooth
-          </Grid>
-        </Box>
-        <Box className={"box-test all-element-center"}>
-          {loading ? (
-            <ClipLoader
-              color={"#123abc"}
-              loading={loading}
-              size={100}
-              className="all-element-center"
-            />
-          ) : (
-            <Grid>
-              <Box className="box-body all-element-center">
-                <Grid
-                  container
-                  spacing={1}
-                  className={"grid-body all-element-center"}
-                  size={{
-                    xs: 3,
-                    md: 3,
-                  }}
-                >
-                  <Box className={"grid-body3 all-element-center"}>
-                    <div
+    <CssBaseline enableColorScheme />
+    <Container maxWidth={false} disableGutters component="main">
+      <Box className={"box-head"}>
+        <Grid className={"position-header grid-head frontProp"}>
+          {/* <h1>{shortUUID}</h1> */}
+          SX.Autobooth
+        </Grid>
+      </Box>
+      <Box className={"box-test all-element-center"}>
+        {loading ? (
+          <ClipLoader
+            color={"#123abc"}
+            loading={loading}
+            size={100}
+            className="all-element-center"
+          />
+        ) : (
+          <Grid>
+            <Box className="box-body all-element-center">
+              <Grid
+                container
+                spacing={1}
+                className={"grid-body all-element-center"}
+                size={{
+                  xs: 3,
+                  md: 3,
+                }}
+              >
+                <Box className={"grid-body3 all-element-center"}>
+                  <div
+                    style={{
+                      position: "relative",
+                      width: "150px",
+                      height: "200px",
+                      borderRadius: "20px",
+                      overflow: "hidden",
+                      border: "5px solid black",
+                    }}
+                  >
+                    <img
+                      // onLoad={() => handleLoadImage("img1")}
+                      src={pathImg}
                       style={{
-                        position: "relative",
-                        width: "150px",
-                        height: "200px",
-                        borderRadius: "20px",
-                        overflow: "hidden",
-                        border: "5px solid black",
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        // left:"15px"
                       }}
-                    >
-                      <img
-                        // onLoad={() => handleLoadImage("img1")}
-                        src={pathImg}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          // left:"15px"
-                        }}
-                      />
-                      <div
-                        onClick={() => handleImage(pathImg)}
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          width: "100%",
-                          height: "100%",
-                          backgroundColor: "rgba(255, 255, 255, 0.5)",
-                          backgroundImage: `url(${icon})`,
-                          backgroundRepeat: "no-repeat",
-                          backgroundPosition: "center",
-                          backgroundSize: "32%",
-                        }}
-                      ></div>
-                    </div>
-                  </Box>
-                  <Box className={"grid-body3 all-element-center"}>
+                    />
                     <div
+                      onClick={() => handleImage(pathImg)}
                       style={{
-                        position: "relative",
-                        width: "150px",
-                        height: "200px",
-                        borderRadius: "20px",
-                        overflow: "hidden",
-                        border: "5px solid black",
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        backgroundColor: "rgba(255, 255, 255, 0.5)",
+                        backgroundImage: `url(${icon})`,
+                        backgroundRepeat: "no-repeat",
+                        backgroundPosition: "center",
+                        backgroundSize: "32%",
                       }}
-                    >
+                    ></div>
+                  </div>
+                </Box>
+                <Box className={"grid-body3 all-element-center"}>
+                  <div
+                    style={{
+                      position: "relative",
+                      width: "150px",
+                      height: "200px",
+                      borderRadius: "20px",
+                      overflow: "hidden",
+                      border: "5px solid black",
+                    }}
+                  >
+                    {pathThn ? (
                       <img
                         src={pathThn}
                         style={{
@@ -237,187 +240,116 @@ function App() {
                           objectFit: "cover",
                         }}
                       />
-                      <div
-                        onClick={() => handleVdo(pathVdo)}
+                    ) : (
+                      <img
+                        src={pathImg}
                         style={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
                           width: "100%",
                           height: "100%",
-                          backgroundColor: "rgba(255, 255, 255, 0.5)",
-                          backgroundImage: `url(${VDO})`,
-                          backgroundRepeat: "no-repeat",
-                          backgroundPosition: "center",
-                          backgroundSize: "32%",
+                          objectFit: "cover",
                         }}
-                      ></div>
-                    </div>
-                  </Box>
-                </Grid>
-              </Box>
-              <Box className={"box-button all-element-center"}>
-                <Grid
-                  container
-                  spacing={1}
-                  className={"grid-body"}
-                  size={{
-                    xs: 3,
-                    md: 3,
-                  }}
+                      />
+                    )}
+                    <div
+                      onClick={() => handleVdo(pathVdo)}
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        backgroundColor: "rgba(255, 255, 255, 0.5)",
+                        backgroundImage: `url(${VDO})`,
+                        backgroundRepeat: "no-repeat",
+                        backgroundPosition: "center",
+                        backgroundSize: "32%",
+                      }}
+                    ></div>
+                  </div>
+                </Box>
+              </Grid>
+            </Box>
+            <Box className={"box-button all-element-center"}>
+              <Grid
+                container
+                spacing={1}
+                className={"grid-body"}
+                size={{
+                  xs: 3,
+                  md: 3,
+                }}
+              >
+                <Box
+                  onClick={() => handleImage(pathImg)}
+                  className={"box-img-button"}
                 >
-                  <Box
-                    onClick={() => handleImage(pathImg)}
-                    className={"box-img-button"}
-                  >
-                    Image
-                  </Box>
-                  <Box
-                    onClick={() => handleVdo(pathVdo)}
-                    className={"box-Vdo-button"}
-                  >
-                    Video
-                  </Box>
-                </Grid>
-              </Box>
-            </Grid>
-          )}
-        </Box>
-        <Box className="all-element-center">
-          <Modal
-            open={open}
-            // onClick={handleClose}
-            closeAfterTransition
-            BackdropComponent={Backdrop}
-          >
-            <Fade in={open}>
+                  Image
+                </Box>
+                <Box
+                  onClick={() => handleVdo(pathVdo)}
+                  className={"box-Vdo-button"}
+                >
+                  Video
+                </Box>
+              </Grid>
+            </Box>
+          </Grid>
+        )}
+      </Box>
+      <Box className="all-element-center">
+        <Modal
+          open={open}
+          // onClick={handleClose}
+          closeAfterTransition
+          BackdropComponent={Backdrop}
+        >
+          <Fade in={open}>
+            <Box
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                height: "100vh",
+                width: "100vw",
+                position: "fixed",
+              }}
+            >
               <Box
-                style={{
+                onClick={handleClose}
+                sx={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "rgba(0, 0, 0, 0.3)",
+                  backdropFilter: "blur(4px)",
+                }}
+              ></Box>
+              <Box
+                sx={{
+                  flexShrink: 0,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  // top: "150px",
-                  height: "100vh",
-                  width: "100vw",
-                  position: "fixed",
+                  backgroundColor: "rgba(0, 0, 0, 0.3)",
+                  backdropFilter: "blur(6px)",
+                  position:
+                    "relative",
+                  width:"100vw"
                 }}
               >
-                <Box
+                <Button
+                  className="close-popup-button"
                   onClick={handleClose}
                   sx={{
-                    flex: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "rgba(0, 0, 0, 0.3)",
-                    backdropFilter: "blur(4px)",
-                  }}
-                ></Box>
-                <Box
-                  sx={{
-                    flexShrink: 0,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "rgba(0, 0, 0, 0.3)",
-                    backdropFilter: "blur(6px)",
-                    position:
-                      "relative",
+                    position: "absolute",
+                    top: "120px" ,
+                    left: "30px"
                   }}
                 >
-                  <Button
-                    className="close-popup-button"
-                    onClick={handleClose}
-                    sx={{
-                      position: "absolute",
-                      top: "120px" ,
-                      left: "30px"
-                    }}
-                  >
-                    ✖
-                  </Button>
-                  <br />
-                  {vdo ? (
-                    <ReactPlayer
-                      url={vdo}
-                      controls={true}
-                      loop={true}
-                      style={{
-                        maxHeight: "72%",
-                        maxWidth: "72%",
-                        position: "relative",
-                        zIdex: 99999,
-                        // marginTop: "15px",
-                      }}
-                    />
-                  ) : image ? (
-                    <img
-                      src={image}
-                      alt="Selected"
-                      style={{
-                        maxHeight: "68%",
-                        maxWidth: "68%",
-                        // marginTop: "120px",
-                        borderTop: "5px solid Darkgray",
-                        borderLeft: "8px solid Darkgray",
-                        borderRight: "5px solid Darkgray",
-                      }}
-                    />
-                  ) : (
-                    <div></div>
-                  )}
-                  <Box
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      marginTop: "20px",
-                    }}
-                  >
-                    <Button
-                      className="save-popup-button"
-                      onClick={() => {
-                        if (image) {
-                          saveAs(imgFile, "image.jpg");
-                        } else if (vdo) {
-                          saveAs(vdoFile, "video.mp4");
-                        }
-                      }}
-                    >
-                      <img
-                        src={save}
-                        alt="Selected"
-                        style={{ maxHeight: "140px", maxWidth: "140px" }}
-                      />
-                    </Button>
-                    <Button
-                      className="share-popup-button"
-                      onClick={handleShareClick}
-                    >
-                      <img
-                        src={share}
-                        alt="Selected"
-                        style={{ maxHeight: "68px", maxWidth: "68px" }}
-                      />
-                    </Button>
-                  </Box>
-                </Box>
-                <Box
-                  onClick={handleClose}
-                  sx={{
-                    flex: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "rgba(0, 0, 0, 0.3)",
-                    backdropFilter: "blur(4px)",
-                  }}
-                ></Box>
-                <Button className="close-popup-button" onClick={handleClose}>
                   ✖
                 </Button>
+                <br />
                 {vdo ? (
                   <ReactPlayer
                     url={vdo}
@@ -428,7 +360,7 @@ function App() {
                       maxWidth: "72%",
                       position: "relative",
                       zIdex: 99999,
-                      // marginTop: "150px",
+                      // marginTop: "15px",
                     }}
                   />
                 ) : image ? (
@@ -447,25 +379,6 @@ function App() {
                 ) : (
                   <div></div>
                 )}
-
-                {/* <div className="overlay-box" style={{ paddingBottom: "50px" }}>
-                  {shareResult && (
-                    <Box className={"all-element-center share-data"}>
-                      <ShareSocial
-                        url={image || vdo}
-                        // onSocialButtonClicked={(data) => console.log(data)}
-                        socialTypes={[
-                          "facebook",
-                          "twitter",
-                          "reddit",
-                          "linkedin",
-                        ]}
-                        // className={"share-data"}
-                      />
-                    </Box>
-                  )}
-                </div> */}
-
                 <Box
                   style={{
                     display: "flex",
@@ -478,9 +391,9 @@ function App() {
                     className="save-popup-button"
                     onClick={() => {
                       if (image) {
-                        saveAs(imgFile, "image.jpg");
+                        saveAs(imgFile, `image_${shortUUID}.jpg`);
                       } else if (vdo) {
-                        saveAs(vdoFile, "video.mp4");
+                        saveAs(vdoFile, `video_${shortUUID}.jpg`);
                       }
                     }}
                   >
@@ -502,11 +415,23 @@ function App() {
                   </Button>
                 </Box>
               </Box>
-            </Fade>
-          </Modal>
-        </Box>
-      </Container>
-    </ThemeProvider>
+              <Box
+                onClick={handleClose}
+                sx={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "rgba(0, 0, 0, 0.3)",
+                  backdropFilter: "blur(4px)",
+                }}
+              ></Box>
+            </Box>
+          </Fade>
+        </Modal>
+      </Box>
+    </Container>
+  </ThemeProvider>
   );
 }
 

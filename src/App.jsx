@@ -54,12 +54,12 @@ function App() {
     const response = await axios.get(url, {
       responseType: 'blob',
       headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      }
-    })
-    console.log(response.data)
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    });
+    console.log(response.data);
     const blob = await response.data;
     const file = new File([blob], 'media.'+dataType, { type: blobType });
     if (type == "img") {
@@ -82,7 +82,12 @@ function App() {
       // console.log(png);
       setPathImg(png);
       setPathVdo(mp4);
-      setPathThn(thumbnail)
+      if (result.data.data.source[2].path) {
+        const thumbnail = result.data.data.source[2].path;
+        console.log(thumbnail);
+        setPathThn(thumbnail);
+      }
+      setPathThn(null);
       await convertUrlToFile(png, "img");
       await convertUrlToFile(mp4, "vdo");
       // await convertUrlToFile(thumbnail, "img");
@@ -134,7 +139,7 @@ function App() {
     if (navigator.share) {
       await navigator
         .share({
-          files: mediaState == 'img' ? [imgFile] : [vdoFile]
+          files: mediaState == "img" ? [imgFile] : [vdoFile],
         })
         .then(() => {
           console.log("Successfully shared");
@@ -298,6 +303,118 @@ function App() {
                   position: "fixed",
                 }}
               >
+                <Box
+                  onClick={handleClose}
+                  sx={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "rgba(0, 0, 0, 0.3)",
+                    backdropFilter: "blur(4px)",
+                  }}
+                ></Box>
+                <Box
+                  sx={{
+                    flexShrink: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "rgba(0, 0, 0, 0.3)",
+                    backdropFilter: "blur(6px)",
+                    position:
+                      "relative",
+                  }}
+                >
+                  <Button
+                    className="close-popup-button"
+                    onClick={handleClose}
+                    sx={{
+                      position: "absolute",
+                      top: "120px" ,
+                      left: "30px"
+                    }}
+                  >
+                    ✖
+                  </Button>
+                  <br />
+                  {vdo ? (
+                    <ReactPlayer
+                      url={vdo}
+                      controls={true}
+                      loop={true}
+                      style={{
+                        maxHeight: "72%",
+                        maxWidth: "72%",
+                        position: "relative",
+                        zIdex: 99999,
+                        // marginTop: "15px",
+                      }}
+                    />
+                  ) : image ? (
+                    <img
+                      src={image}
+                      alt="Selected"
+                      style={{
+                        maxHeight: "68%",
+                        maxWidth: "68%",
+                        // marginTop: "120px",
+                        borderTop: "5px solid Darkgray",
+                        borderLeft: "8px solid Darkgray",
+                        borderRight: "5px solid Darkgray",
+                      }}
+                    />
+                  ) : (
+                    <div></div>
+                  )}
+                  <Box
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      marginTop: "20px",
+                    }}
+                  >
+                    <Button
+                      className="save-popup-button"
+                      onClick={() => {
+                        if (image) {
+                          saveAs(imgFile, "image.jpg");
+                        } else if (vdo) {
+                          saveAs(vdoFile, "video.mp4");
+                        }
+                      }}
+                    >
+                      <img
+                        src={save}
+                        alt="Selected"
+                        style={{ maxHeight: "140px", maxWidth: "140px" }}
+                      />
+                    </Button>
+                    <Button
+                      className="share-popup-button"
+                      onClick={handleShareClick}
+                    >
+                      <img
+                        src={share}
+                        alt="Selected"
+                        style={{ maxHeight: "68px", maxWidth: "68px" }}
+                      />
+                    </Button>
+                  </Box>
+                </Box>
+                <Box
+                  onClick={handleClose}
+                  sx={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "rgba(0, 0, 0, 0.3)",
+                    backdropFilter: "blur(4px)",
+                  }}
+                ></Box>
                 <Button className="close-popup-button" onClick={handleClose}>
                   ✖
                 </Button>

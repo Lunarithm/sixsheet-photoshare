@@ -5,7 +5,10 @@ import path from "path";
 export default defineConfig({
     plugins: [react()],
     preview: {
-        allowedHosts: `sixsheet-photoshare-3tu92.ondigitalocean.app`,
+        allowedHosts: [`sixsheet-photoshare-3tu92.ondigitalocean.app`],
         port: 8080,
       },
+      server: {
+		allowedHosts: ['sixsheet-photoshare-3tu92.ondigitalocean.app']
+	}  
 });

@@ -29,6 +29,7 @@ import { ShareSocial } from "react-share-social";
 import axios from "axios";
 import ClipLoader from "react-spinners/ClipLoader";
 import { saveAs } from "file-saver";
+import QRCode from "react-qr-code";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -72,9 +73,9 @@ function App() {
   const dataToApp = async () => {
     try {
       const result = await axios.get(
-        `https://apihub.sixsheet.me/media/${shortUUID}`
+        `${import.meta.env.VITE_APIHUB_URL}/media/${shortUUID}`
       );
-      // console.log(result.data.data.source);
+      console.log(import.meta.env.VITE_APIHUB_URL);
       const png = result.data.data.source[0].path;
       const mp4 = result.data.data.source[1].path;
       // console.log(png);
@@ -427,6 +428,14 @@ function App() {
           </Fade>
         </Modal>
       </Box>
+      <Container className="all-element-center" style={{}}>
+      <QRCode
+    size={256}
+    style={{ height: "20vh", maxWidth: "30%" }}
+    value={window.location.href}
+    viewBox={`0 0 256 256`}
+  />
+  </Container>
     </Container>
   </ThemeProvider>
   );

@@ -78,11 +78,10 @@ function App() {
       // console.log(result.data.data.source);
       const png = result.data.data.source[0].path;
       const mp4 = result.data.data.source[1].path;
-      const thumbnail = result.data.data.source[2].path;
       // console.log(png);
       setPathImg(png);
       setPathVdo(mp4);
-      if (result.data.data.source[2].path) {
+      if (result?.data?.data?.source[2]?.path) {
         const thumbnail = result.data.data.source[2].path;
         setPathThn(thumbnail);
       }else{

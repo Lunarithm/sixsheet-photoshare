@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
-import Gallery from './Gallery.jsx'
+import Pin from './Pin.jsx'
 
 import {
     createBrowserRouter,
@@ -16,7 +16,7 @@ const router = createBrowserRouter([
     },
     {
         path: "/gallery",
-        element: <Gallery/>
+        element: <Pin/>
     }
 ]);
 

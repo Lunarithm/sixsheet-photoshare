@@ -18,7 +18,6 @@ import Grid from "@mui/material/Grid2";
 import { theme } from "./assets/theme";
 import { RotatingLines } from "react-loader-spinner";
 import "./index.css";
-// import getUUID from './modelControll/dataResult'
 import { useNavigate, useParams } from "react-router-dom";
 import icon from "./assets/icon.png";
 import VDO from "./assets/VDO.png";

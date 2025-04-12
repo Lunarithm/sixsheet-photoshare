@@ -18,7 +18,6 @@ import Grid from "@mui/material/Grid2";
 import { theme } from "./assets/theme";
 import { RotatingLines } from "react-loader-spinner";
 import "./index.css";
-// import getUUID from './modelControll/dataResult'
 import { useNavigate, useParams } from "react-router-dom";
 import icon from "./assets/icon.png";
 import VDO from "./assets/VDO.png";
@@ -78,11 +77,10 @@ function App() {
       // console.log(result.data.data.source);
       const png = result.data.data.source[0].path;
       const mp4 = result.data.data.source[1].path;
-      const thumbnail = result.data.data.source[2].path;
       // console.log(png);
       setPathImg(png);
       setPathVdo(mp4);
-      if (result.data.data.source[2].path) {
+      if (result?.data?.data?.source[2]?.path) {
         const thumbnail = result.data.data.source[2].path;
         setPathThn(thumbnail);
       }else{

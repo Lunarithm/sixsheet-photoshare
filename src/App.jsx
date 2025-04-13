@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import CssBaseline from "@mui/material/CssBaseline";
 import Paper from "@mui/material/Paper";
-import Grid from "@mui/material/Grid2";
+import Grid from "@mui/material/Grid";
 import { theme } from "./assets/theme";
 import { RotatingLines } from "react-loader-spinner";
 import "./index.css";
@@ -291,6 +291,14 @@ function App() {
                 </Box>
               </Grid>
             </Box>
+            <Container className="all-element-center" style={{}}>
+      <QRCode
+    size={256}
+    style={{ height: "20vh", maxWidth: "30%" }}
+    value={window.location.href}
+    viewBox={`0 0 256 256`}
+  />
+  </Container>
           </Grid>
         )}
       </Box>
@@ -428,14 +436,14 @@ function App() {
           </Fade>
         </Modal>
       </Box>
-      <Container className="all-element-center" style={{}}>
+      {/* <Container className="all-element-center" style={{}}>
       <QRCode
     size={256}
     style={{ height: "20vh", maxWidth: "30%" }}
     value={window.location.href}
     viewBox={`0 0 256 256`}
   />
-  </Container>
+  </Container> */}
     </Container>
   </ThemeProvider>
   );

@@ -91,11 +91,12 @@ function Gallery() {
       length={4}
       initialValue={pin}
       secret
-      type="custom"
+      type="numberic"
       style={{ marginTop: "30vh", padding: '10px' }}
       inputStyle={{ borderColor: 'black', backgroundColor: "white", width: "5em", height: "5em" }}
       autoSelect={true}
       onComplete={checkPin}
+      focus={true}
     />
       <Typography className={"all-element-center"} color={"white"} variant="h4" gutterBottom>
         Put yor PIN

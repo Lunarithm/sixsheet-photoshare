@@ -34,6 +34,10 @@ const Medias = sequelize.define('Medias',
             type: DataTypes.TEXT,
             allowNull: false
         },
+        event: {
+            type: DataTypes.JSON,
+            allowNull: true
+        }
     });
     
     export default Medias;

@@ -82,6 +82,7 @@ function Gallery() {
       fetchMedias().then((response) => {
         setMedias(response.data.data.rows);
         setLoader(false);
+        console.log(response.data.data.rows)
       });
     }
   }, [offset, limit]);
@@ -135,8 +136,8 @@ function Gallery() {
                     loading="lazy"
                   />
                   <ImageListItemBar
-                    title={moment(item.updatedAt).tz("Asia/Bangkok").format('LLLL')}
-                    subtitle={item.shortUUID}
+                    title={moment(item.updatedAt).tz("Asia/Bangkok").format('MM/DD h:mma')}
+                    subtitle={item?.event?.machineName}
                     actionIcon={
                       <IconButton
                         onClick={() => openInNewTab(item.shortUUID)}

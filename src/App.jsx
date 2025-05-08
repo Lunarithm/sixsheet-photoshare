@@ -46,6 +46,7 @@ function App() {
   const [pathThn, setPathThn] = useState("");
   const [shareResult, setShare] = useState(false);
   const [mediaState, setMediaState] = useState("web");
+  const [isDisplayVideo,setDisplayVideo] = useState(true);
 
   async function convertUrlToFile(url,type) {
     const dataType = type == "img" ? "jpg" : "mp4";
@@ -77,7 +78,13 @@ function App() {
       );
       console.log(import.meta.env.VITE_APIHUB_URL);
       const png = result.data.data.source[0].path;
-      const mp4 = result.data.data.source[1].path;
+      let mp4 = "";
+      if (result?.data?.data?.source[1]?.path) {
+        mp4 = result.data.data.source[1].path;
+      }else{
+        setDisplayVideo(false);
+      }
+      
       // console.log(png);
       setPathImg(png);
       setPathVdo(mp4);
@@ -218,7 +225,7 @@ function App() {
                     ></div>
                   </div>
                 </Box>
-                <Box className={"grid-body3 all-element-center"}>
+                {isDisplayVideo ? (<Box className={"grid-body3 all-element-center"}>
                   <div
                     style={{
                       position: "relative",
@@ -264,13 +271,13 @@ function App() {
                       }}
                     ></div>
                   </div>
-                </Box>
+                </Box>): <div></div>}
+                
               </Grid>
             </Box>
             <Box className={"box-button all-element-center"}>
               <Grid
                 container
-                spacing={1}
                 className={"grid-body"}
                 size={{
                   xs: 3,
@@ -283,12 +290,12 @@ function App() {
                 >
                   Image
                 </Box>
-                <Box
+                {isDisplayVideo ? (<Box
                   onClick={() => handleVdo(pathVdo)}
                   className={"box-Vdo-button"}
                 >
                   Video
-                </Box>
+                </Box>) : (<div></div>) }
               </Grid>
             </Box>
             <Container className="all-element-center" style={{}}>

@@ -1,0 +1,61 @@
+@font-face {
+    font-family: 'Syne';
+    src: local('Syne'),
+    url('./fonts/Syne-VariableFont_wght.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'SyneRegular';
+    src: local('SyneRegular'),
+    url('./fonts/static/Syne-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'SyneBold';
+    src: local('SyneBold'),
+    url('./fonts/static/Syne-Bold.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'SyneExtraBold';
+    src: local('SyneExtraBold'),
+    url('./fonts/static/Syne-ExtraBold.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'SyneMedium';
+    src: local('SyneMedium'),
+    url('./fonts/static/Syne-Medium.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'SyneSemiBold';
+    src: local('SyneSemiBold'),
+    url('./fonts/static/Syne-SemiBold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Boyrun';
+  src: url('../assets/fonts/Boyrun.ttf') format('truetype');
+  /* font-weight: normal;
+  font-style: normal; */
+}
+
+@font-face {
+  font-family: 'PPNeueMachinaUltrabold';
+  src: url('../src/assets/fonts/PPNeueMachina-Ultrabold.otf') format('truetype');
+  /* font-weight: normal;
+  font-style: normal; */
+}
+
+@font-face {
+  font-family: 'PPNeueMachinaRegular';
+  src: url('../src/assets/fonts/PPNeueMachina-Regular.otf') format('truetype');
+  /* font-weight: normal;
+  font-style: normal; */
+}
+
+@font-face {
+  font-family: 'PPNeueMachinaLight';
+  src: url('../src/assets/fonts/PPNeueMachina-Light.otf') format('truetype');
+  /* font-weight: normal;
+  font-style: normal; */
+}

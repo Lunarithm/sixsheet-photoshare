@@ -80,7 +80,7 @@ button:focus-visible {
 }
 
 .box-body{
-  height: 1;
+  height: 30vh;
   width: 1;
   /* padding-Top: 104px; */
 }
@@ -106,7 +106,7 @@ button:focus-visible {
 .grid-body3 {
   height: 1;
   width: 1;
-  /* background-color: skyblue; */
+  /* border-radius: 50%; */
 }
 
 .position-header {
@@ -140,7 +140,7 @@ button:focus-visible {
 }
 
 .save-popup-button {
-  position: absolute;
+  position: relative;
   top: -16px;
   left: -26px;
   color: white !important;
@@ -207,5 +207,5 @@ button:focus-visible {
 .box-test{
   /* background-color: aqua; */
   font-size: 24px;
-  padding-top: 20vh;
+  /* padding-top: 5vh; */
 }

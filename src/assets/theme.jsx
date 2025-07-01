@@ -4,7 +4,7 @@ import photoPic from './Vector.png';
 const theme = createTheme({
     palette: {
         background: {
-            default: "white"
+            default: "Black"
         },
     },
     typography: {

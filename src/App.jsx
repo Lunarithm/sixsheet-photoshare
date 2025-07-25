@@ -406,7 +406,7 @@ function App() {
                     width: "100vw",
                   }}
                 >
-                  <Button
+<Button
                     className="close-popup-button"
                     onClick={handleClose}
                     sx={{

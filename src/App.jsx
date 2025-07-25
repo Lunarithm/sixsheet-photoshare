@@ -469,7 +469,7 @@ function App() {
                         if (image) {
                           saveAs(imgFile, `image_${shortUUID}.jpg`);
                         } else if (vdo) {
-                          saveAs(vdoFile, `video_${shortUUID}.jpg`);
+                          saveAs(vdoFile, `video_${shortUUID}.mp4`);
                         }
                       }}
                     >

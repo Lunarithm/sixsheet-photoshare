@@ -80,7 +80,7 @@ button:focus-visible {
 }
 
 .box-body{
-  height: 1;
+  height: 30vh;
   width: 1;
   /* padding-Top: 104px; */
 }
@@ -106,7 +106,7 @@ button:focus-visible {
 .grid-body3 {
   height: 1;
   width: 1;
-  /* background-color: skyblue; */
+  /* border-radius: 50%; */
 }
 
 .position-header {
@@ -121,28 +121,28 @@ button:focus-visible {
   font-weight: 700
 }
 
-.close-popup-button {
-  position: absolute;
+.close-popup-button {          
   color: black !important;
   border: none;
   font-size: 20px !important;
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1100;
+  z-index: 99999999999999999999999;
   outline: none !important;
   border-radius: 50% !important;
   background-color: #E5F575 !important;
-  width: 44px !important;  /* ขนาดเล็กลง */
+  width: 44px !important;  
   height: 44px !important;
   padding: 0 !important;
-  min-width: unset !important;  /* ยกเลิกขนาดขั้นต่ำ */
+  min-width: unset !important;
 }
 
+
 .save-popup-button {
-  position: absolute;
+  position: relative;
   top: -16px;
-  left: -26px;
+  /* left: -26px; */
   color: white !important;
   border: none;
   font-size: 22px !important;
@@ -157,7 +157,7 @@ button:focus-visible {
 .share-popup-button {
   position: relative;
   top: -16px;
-  left: -26px;
+  /* left: -26px; */
   color: white !important;
   border: none;
   font-size: 22px !important;
@@ -207,5 +207,59 @@ button:focus-visible {
 .box-test{
   /* background-color: aqua; */
   font-size: 24px;
-  padding-top: 20vh;
+  width: 1
+  /* padding-top: 5vh; */
+}
+
+.popUp-Qr {
+  width: 260px;             
+  height: 260px;             
+  background-color: #AB9C73!important;
+  color: white !important;
+  font-size: 14px;
+  /* background-image: url('./assets/QRCode.png') !important ;
+  background-size: 40% !important;
+  background-position-x: 80px;
+  background-position-y: 60px;
+  background-repeat: no-repeat !important; */
+}
+
+.close-popup-button-Qr {
+  position: absolute;
+  color: #1a1a1a!important;
+  border: none;
+  font-size: 20px !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  z-index: 1100;
+  outline: none !important;
+  border-radius: 50% !important;
+  background-color: #E5F575 !important;
+  width: 46px !important;  
+  height: 44px !important;
+  min-width: unset !important;  
+}
+
+.overlay-box-Qr {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 260px;             
+  height: 260px;
+  padding-bottom: "50px";
+}
+
+.button-QR-element  {
+  z-index: 1 ;
+  background-color: #F5F5F5 !important;
+  width: 70%;
+  height: 50px;
+  /* border: solid !important; */
+  border-radius: 50px !important;
+  /* padding: 10px 22px !important; */
+
 }

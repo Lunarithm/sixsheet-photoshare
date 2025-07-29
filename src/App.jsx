@@ -32,7 +32,7 @@ import { saveAs } from "file-saver";
 import QRCode from "react-qr-code";
 import src from "./assets/cap.png";
 import "./assets/font.css";
-
+import qrIcon from "./assets/Group 58.png";
 function App() {
   const [loading, setLoading] = useState(true);
 
@@ -49,6 +49,11 @@ function App() {
   const [shareResult, setShare] = useState(false);
   const [mediaState, setMediaState] = useState("web");
   const [isDisplayVideo, setDisplayVideo] = useState(true);
+  const [showPopup, setShowPopup] = useState(false);
+
+  const togglePopupQR = () => {
+    setShowPopup(!showPopup);
+  };
 
   async function convertUrlToFile(url, type) {
     const dataType = type == "img" ? "jpg" : "mp4";
@@ -131,6 +136,7 @@ function App() {
     setImage(null);
     setVdo(null);
     setShare(false);
+    setShowPopup(false)
   };
 
   const handleImage = (value) => {
@@ -169,209 +175,232 @@ function App() {
         disableGutters
         component="main"
         sx={{
-          width: "100vw",
+          // width: "100vw",
           // height: "100vh",
-          display: "flex",
-          flexDirection: "column",
+          // display: "flex",
+          // flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
           textAlign: "center",
-          // marginTop: "-606px"
         }}
       >
-        <Box
+        <Grid
           container
-          sx={{
-            width: "100%",
-            maxWidth: "1200px",
-            height: "30vh",
-            margin: "0 auto",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            // paddingTop: "40px",
-            flexDirection: "column",
-            // marginBottom: "40px",
-          }}
+          justifyContent="center"
+          alignItems="center"
+          direction="column"
+          style={{ paddingTop: "40px" }}
         >
-          <img
-            src={src}
-            style={{
-              width: "70%",
-              height: "40%",
-              zIndex: 3,
-              alignItems: "center",
-              justifyContent: "center",
-              //  paddingTop: "20px"
-            }}
-          />
-          <Typography
-            color="#F4F0D3"
-            fontFamily="PPNeueMachinaUltrabold"
-            fontSize="2.8em"
-            textAlign="center"
-            paddingBottom="40px"
-            paddingTop="5px"
-          >
-            DOWNLOAD* Your file
-          </Typography>
-        </Box>
-        <Box className={"box-test all-element-center"}>
+          <Grid item size={{ xs: 10, md: 8 }}>
+            <img
+              src={src}
+              style={{
+                maxWidth: "100%",
+                maxHeight: "50%",
+                zIndex: 3,
+                display: "block",
+                margin: "0 auto",
+              }}
+              alt="Your image"
+            />
+          </Grid>
+          <Grid item size={{ xs: 10, md: 12 }}>
+            <Typography
+              color="#F4F0D3"
+              fontFamily="PPNeueMachinaUltrabold"
+              fontSize="1.5em"
+              textAlign="center"
+              paddingBottom="1em"
+              paddingTop="1em"
+            >
+              DOWNLOAD* Your file
+            </Typography>
+          </Grid>
+        </Grid>
+
+        <Grid
+          container
+          justifyContent="center"
+          alignItems="center"
+          direction="column"
+          sx={{ width: "100%" }}
+        >
+          {/* <Grid
+            item
+            size={{ xs: 12, md: 12 }}
+            spacing={1}
+            className="all-element-center"
+          > */}
           {loading ? (
             <ClipLoader
-              color={"#123abc"}
+              color="#123abc"
               loading={loading}
               size={100}
               className="all-element-center"
             />
           ) : (
-            <Grid>
-              <Box className="box-body all-element-center">
-                <Grid
-                  container
-                  spacing={1}
-                  className={"grid-body all-element-center"}
-                  size={{
-                    xs: 3,
-                    md: 3,
+            <Grid
+              item
+              size={{ xs: 12, md: 12 }}
+              container
+              spacing={2}
+              className="all-element-center"
+            >
+              <Box
+                sx={{
+                  position: "relative",
+                  maxWidth: "44vw",
+                  height: "30vh",
+                  borderRadius: "10px",
+                  border: "12px solid #F4F0D3",
+                }}
+              >
+                <img
+                  src={pathImg}
+                  alt="thumbnail"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+                <Box
+                  onClick={() => handleImage(pathImg)}
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    backgroundColor: "rgba(255, 255, 255, 0.5)",
+                    backgroundImage: `url(${icon})`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "center",
+                    backgroundSize: "32%",
+                    cursor: "pointer",
+                  }}
+                />
+              </Box>
+
+              {showPopup && (
+                <div
+                  className="overlay-box-Qr"
+                   onClick={handleClose}
+                  style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    width: "100vw",
+                    height: "100vh",
+                    backgroundColor: "rgba(0, 0, 0, 0.2)",
+                    backdropFilter: "blur(6px)",
+                    WebkitBackdropFilter: "blur(6px)",
+                    zIndex: 99,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
                   }}
                 >
-                  <Box className={"grid-body3 all-element-center"}>
-                    <div
+                  <div
+                  onClick={(e) => e.stopPropagation()}
+                    className="popUp-Qr"
+                    style={{
+                      position: "relative",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderRadius: "20px",
+                      background: "rgba(255, 255, 255, 0.1)",
+                    }}
+                  >
+                    <Button
+                      className="close-popup-button"
+                      onClick={togglePopupQR}
                       style={{
-                        position: "relative",
-                        width: "250px",
-                        height: "350px",
-                        borderRadius: "30px",
-                        overflow: "hidden",
-                        border: "16px solid  #F4F0D3",
+                        position: "absolute",
+                        top: "-28px",
+                        right: "-10px",
+                        background: "transparent",
+                        paddingTop: "10px",
                       }}
                     >
-                      <img
-                        // onLoad={() => handleLoadImage("img1")}
-                        src={pathImg}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          // left:"15px"
-                        }}
-                      />
-                      <div
-                        onClick={() => handleImage(pathImg)}
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          width: "100%",
-                          height: "100%",
-                          backgroundColor: "rgba(255, 255, 255, 0.5)",
-                          backgroundImage: `url(${icon})`,
-                          backgroundRepeat: "no-repeat",
-                          backgroundPosition: "center",
-                          backgroundSize: "32%",
-                        }}
-                      ></div>
-                    </div>
-                  </Box>
-                  {isDisplayVideo ? (
-                    <Box className={"grid-body3 all-element-center"}>
-                      <div
-                        style={{
-                          position: "relative",
-                          width: "250px",
-                          height: "350px",
-                          borderRadius: "30px",
-                          overflow: "hidden",
-                          border: "16px solid  #F4F0D3",
-                        }}
-                      >
-                        {pathThn ? (
-                          <img
-                            src={pathThn}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                            }}
-                          />
-                        ) : (
-                          <img
-                            src={pathImg}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                            }}
-                          />
-                        )}
-                        <div
-                          onClick={() => handleVdo(pathVdo)}
-                          style={{
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            width: "100%",
-                            height: "100%",
-                            backgroundColor: "rgba(255, 255, 255, 0.5)",
-                            backgroundImage: `url(${VDO})`,
-                            backgroundRepeat: "no-repeat",
-                            backgroundPosition: "center",
-                            backgroundSize: "32%",
-                          }}
-                        ></div>
-                      </div>
-                    </Box>
-                  ) : (
-                    <div></div>
-                  )}
-                </Grid>
-              </Box>
-              {/* <Box className={"box-button all-element-center"}>
-                <Grid
-                  container
-                  className={"grid-body"}
-                  size={{
-                    xs: 3,
-                    md: 3,
+                      ✖
+                    </Button>
+                    <QRCode
+                      style={{
+                        height: "80%",
+                        maxWidth: "72%",
+                        width: "100%",
+                        paddingTop: "18px",
+                        paddingBottom: "20px",
+                      }}
+                      value={window.location.href}
+                    />
+                    <Typography
+                      color="#F4F0D3"
+                      fontFamily="Boyrun"
+                      fontSize="1.3em"
+                      textAlign="center"
+                      lineHeight="16px"
+                      paddingBottom="10px"
+                    >
+                      Scan this QR code <br /> to get an image file
+                    </Typography>
+                  </div>
+                </div>
+              )}
+
+              {isDisplayVideo && (
+                <Box
+                  sx={{
+                    position: "relative",
+                    maxWidth: "44vw",
+                    height: "30vh",
+                    borderRadius: "10px",
+                    border: "12px solid #F4F0D3",
                   }}
                 >
+                  <img
+                    src={pathThn || pathImg}
+                    alt="video thumbnail"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
                   <Box
-                    onClick={() => handleImage(pathImg)}
-                    className={"box-img-button"}
-                  >
-                    Image
-                  </Box>
-                  {isDisplayVideo ? (
-                    <Box
-                      onClick={() => handleVdo(pathVdo)}
-                      className={"box-Vdo-button"}
-                    >
-                      Video
-                    </Box>
-                  ) : (
-                    <div></div>
-                  )}
-                </Grid>
-              </Box> */}
-              <Container className="all-element-center" style={{}}>
-                <QRCode
-                  size={256}
-                  style={{ height: "10vh", maxWidth: "30%", marginTop: "60px" }}
-                  value={window.location.href}
-                  viewBox={`0 0 256 256`}
-                />
-              </Container>
+                    onClick={() => handleVdo(pathVdo)}
+                    sx={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
+                      backgroundColor: "rgba(255, 255, 255, 0.5)",
+                      backgroundImage: `url(${VDO})`,
+                      backgroundRepeat: "no-repeat",
+                      backgroundPosition: "center",
+                      backgroundSize: "32%",
+                      cursor: "pointer",
+                    }}
+                  />
+                </Box>
+              )}
             </Grid>
           )}
-        </Box>
-        <Box className="all-element-center">
-          <Modal
-            open={open}
-            // onClick={handleClose}
-            closeAfterTransition
-            BackdropComponent={Backdrop}
-          >
+        </Grid>
+        {/* </Grid> */}
+
+        <Box
+          className="all-element-center"
+          style={{
+            paddingBottom: "8vh",
+          }}
+          onClick={handleClose}
+        >
+          <Modal open={open} closeAfterTransition BackdropComponent={Backdrop}>
             <Fade in={open}>
               <Box
                 style={{
@@ -383,17 +412,6 @@ function App() {
                 }}
               >
                 <Box
-                  onClick={handleClose}
-                  sx={{
-                    flex: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "rgba(0, 0, 0, 0.3)",
-                    backdropFilter: "blur(4px)",
-                  }}
-                ></Box>
-                <Box
                   sx={{
                     flexShrink: 0,
                     display: "flex",
@@ -404,146 +422,185 @@ function App() {
                     backdropFilter: "blur(6px)",
                     position: "relative",
                     width: "100vw",
+                    height: "100vh",
+                    overflow: "hidden",
                   }}
                 >
-<Button
-                    className="close-popup-button"
-                    onClick={handleClose}
-                    sx={{
-                      position: "absolute",
-                      top: "120px",
-                      left: "60px",
-                    }}
-                  >
-                    ✖
-                  </Button>
-                  <br />
-                  {vdo ? (
-                    <ReactPlayer
-                      url={vdo}
-                      controls={true}
-                      loop={true}
-                      style={{
-                        maxHeight: "72%",
-                        maxWidth: "72%",
-                        position: "relative",
-                        zIdex: 99999,
-                        marginBottom: "20px",
-                      }}
-                    />
-                  ) : image ? (
-                    <img
-                      src={image}
-                      alt="Selected"
-                      style={{
-                        maxHeight: "68%",
-                        maxWidth: "68%",
-                        // marginTop: "120px",
-                        borderTop: "5px solid Darkgray",
-                        borderLeft: "8px solid Darkgray",
-                        borderRight: "5px solid Darkgray",
-                      }}
-                    />
-                  ) : (
-                    <div></div>
-                  )}
-                  <Box
+                  <div
                     style={{
                       display: "flex",
-                      justifyContent: "center",
+                      flexDirection: "column",
                       alignItems: "center",
-                      paddingTop: "40px",
+                      justifyContent: "center",
+                      maxWidth: "100vw",
+                      margin: "0 auto",
+                      position: "relative",
                     }}
                   >
                     <Button
-                      className="save-popup-button"
-                      style={{
-                        backgroundColor: "white",
-                        width: "15rem",
-                        height: "4rem",
-                        borderRadius: "50px",
-                        padding: "10px 22px",
-                        marginRight: "10px"
-                      }}
-                      onClick={() => {
-                        if (image) {
-                          saveAs(imgFile, `image_${shortUUID}.jpg`);
-                        } else if (vdo) {
-                          saveAs(vdoFile, `video_${shortUUID}.mp4`);
-                        }
+                      className="close-popup-button"
+                      onClick={handleClose}
+                      sx={{
+                        position: "absolute",
+                        top: -50,
+                        left: 40,
+                        zIndex: 1000,
                       }}
                     >
-                      <img
-                        src={save}
-                        alt="Selected"
-                        style={{ maxHeight: "100%", maxWidth: "100%" }}
-                      />
-                      <Typography
-                        color="Black"
-                        // fontFamily="Inter"
-                        fontSize="22px"
-                        textAlign="center"
-                        paddingLeft="10px"
-                        fontWeight={400}
-                      >
-                        DOWNLOAD
-                      </Typography>
+                      ✖
                     </Button>
-                    <Button
-                      className="share-popup-button"
+                    {vdo ? (
+                      <ReactPlayer
+                        url={vdo}
+                        controls={true}
+                        loop={true}
+                        style={{
+                          maxHeight: "80vh",
+                          maxWidth: "72%",
+                          position: "relative",
+                          zIdex: 99,
+                          marginBottom: "20px",
+                        }}
+                      ></ReactPlayer>
+                    ) : image ? (
+                      <img
+                        src={image}
+                        alt="Selected"
+                        style={{
+                          maxHeight: "80vh",
+                          maxWidth: "68%",
+                          // marginTop: "120px",
+                          // borderTop: "5px solid Darkgray",
+                          // borderLeft: "8px solid Darkgray",
+                          // borderRight: "5px solid Darkgray",
+                        }}
+                      />
+                    ) : (
+                      <div></div>
+                    )}
+                    <Box
                       style={{
-                         backgroundColor: "white",
-                        width: "15rem",
-                        height: "4rem",
-                        borderRadius: "50px",
-                        padding: "10px 22px",
-                        marginLeft: "10px"
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        paddingTop: "40px",
                       }}
-                      onClick={handleShareClick}
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <img
-                        src={share}
-                        alt="Selected"
-                        style={{ maxHeight: "100%", maxWidth: "100%" }}
-                      />
-                      <Typography
-                        color="Black"
-                        // fontFamily="Inter"
-                        fontSize="22px"
-                        textAlign="center"
-                        paddingLeft="10px"
-                        fontWeight={400}
+                      <Button
+                        className="save-popup-button"
+                        style={{
+                          backgroundColor: "white",
+                          width: "160px",
+                          height: "40px",
+                          borderRadius: "50px",
+                          // padding: "10px 22px",
+                          marginRight: "10px",
+                        }}
+                        onClick={() => {
+                          if (image) {
+                            saveAs(imgFile, `image_${shortUUID}.jpg`);
+                          } else if (vdo) {
+                            saveAs(vdoFile, `video_${shortUUID}.mp4`);
+                          }
+                        }}
                       >
-                        SHARE
-                      </Typography>
-                    </Button>
-                  </Box>
+                        <img
+                          src={save}
+                          alt="Selected"
+                          style={{ maxHeight: "60%", maxWidth: "60%" }}
+                        />
+                        <Typography
+                          color="Black"
+                          // fontFamily="Inter"
+                          fontSize="1rem"
+                          textAlign="center"
+                          paddingLeft="8px"
+                          fontWeight={600}
+                        >
+                          DOWNLOAD
+                        </Typography>
+                      </Button>
+                      <Button
+                        className="share-popup-button"
+                        style={{
+                          backgroundColor: "white",
+                          width: "160px",
+                          height: "40px",
+                          borderRadius: "50px",
+                          // padding: "10px 22px",
+                          marginLeft: "10px",
+                        }}
+                        onClick={handleShareClick}
+                      >
+                        <img
+                          src={share}
+                          alt="Selected"
+                          style={{ maxHeight: "60%", maxWidth: "60%" }}
+                        />
+                        <Typography
+                          color="Black"
+                          // fontFamily="Inter"
+                          fontSize="1rem"
+                          textAlign="center"
+                          paddingLeft="10px"
+                          fontWeight={600}
+                        >
+                          SHARE
+                        </Typography>
+                      </Button>
+                    </Box>
+                  </div>
                 </Box>
-                <Box
-                  onClick={handleClose}
-                  sx={{
-                    flex: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "rgba(0, 0, 0, 0.3)",
-                    backdropFilter: "blur(4px)",
-                  }}
-                ></Box>
               </Box>
             </Fade>
           </Modal>
         </Box>
+
+        <Grid
+          container
+          justifyContent="center"
+          alignItems="center"
+          // direction="column"
+          // paddingBottom="8vh"
+        >
+          <Grid item size={{ xs: 8, md: 4 }} className={"all-element-center"}>
+            <Button
+              variant="contained"
+              className={"button-QR-element color-button all-element-center"}
+              onClick={togglePopupQR}
+            >
+              <img
+                src={qrIcon}
+                style={{
+                  maxHidth: "40%",
+                  maxHeight: "30px",
+                  marginRight: "5px",
+                }}
+              />
+              <Typography
+                color="black"
+                fontSize="1.2rem"
+                // fontFamily="Inter"
+                fontWeight={600}
+                textTransform="none"
+              >
+                Show QR
+              </Typography>
+            </Button>
+          </Grid>
+        </Grid>
+
         <Box
           sx={{
+            position: "fixed",
+            bottom: 0,
             width: "100%",
-            maxWidth: "100%",
-            margin: "0 auto",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            flexDirection: "column",
-            height: "20vh",
+            padding: "32px",
+            // backgroundColor: "transparent",
           }}
         >
           <Typography
@@ -556,14 +613,6 @@ function App() {
             POWERED BY SIXSHEET
           </Typography>
         </Box>
-        {/* <Container className="all-element-center" style={{}}>
-      <QRCode
-    size={256}
-    style={{ height: "20vh", maxWidth: "30%" }}
-    value={window.location.href}
-    viewBox={`0 0 256 256`}
-  />
-  </Container> */}
       </Container>
     </ThemeProvider>
   );

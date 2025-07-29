@@ -20,7 +20,7 @@ import { RotatingLines } from "react-loader-spinner";
 import "./index.css";
 import { useNavigate, useParams } from "react-router-dom";
 import icon from "./assets/group92.png";
-import VDO from "./assets/vector.png";
+import VDO from "./assets/Vector.png";
 import Backdrop from "@mui/material/Backdrop";
 import save from "./assets/saveNew.png";
 import share from "./assets/sh.png";

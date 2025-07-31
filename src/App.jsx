@@ -461,6 +461,7 @@ function App() {
                           zIdex: 99,
                           marginBottom: "20px",
                         }}
+                        onClick={(e) => e.stopPropagation()}
                       ></ReactPlayer>
                     ) : image ? (
                       <img
@@ -474,6 +475,7 @@ function App() {
                           // borderLeft: "8px solid Darkgray",
                           // borderRight: "5px solid Darkgray",
                         }}
+                        onClick={(e) => e.stopPropagation()}
                       />
                     ) : (
                       <div></div>

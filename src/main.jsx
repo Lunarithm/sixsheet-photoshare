@@ -5,6 +5,8 @@ import App from './App.jsx'
 import Gallery from './Pages/Gallery.jsx'
 import GalleryHome from './Pages/GalleryHome.jsx'
 import GalleryResult from './Pages/GalleryResult.jsx'
+import ProtectedRoute from './Pages/ProtectedRoute.jsx'
+import LoginPage from './Pages/LoginPage.jsx'
 
 import {
     createBrowserRouter,
@@ -18,17 +20,27 @@ const router = createBrowserRouter([
     },
     {
         path: "/admin",
-        element: <Gallery/>
-    },
+        element: (<ProtectedRoute>
+        <Gallery/>
+      </ProtectedRoute>)
+      },
     {
         path:'/gallery/home',
-        element: <GalleryHome/>
+        element: (<ProtectedRoute>
+        <GalleryHome />
+      </ProtectedRoute>)
     },
     {
         path:'/gallery/result',
-        element: <GalleryResult/>
+        element: (
+            <ProtectedRoute>
+            <GalleryResult/>
+            </ProtectedRoute>)
     },
-    
+    {
+        path: "/login",
+        element: <LoginPage/>
+    }
 ]);
 
 createRoot(document.getElementById('root')).render(

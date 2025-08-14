@@ -89,7 +89,7 @@ const [machineNos, setMachineNos] = React.useState(() => {
   // if no selection, go back to picker
   useEffect(() => {
     if (!machineNos.length) {
-      navigate("/gallery/home", { replace: true });
+      navigate("/gallery/filter", { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(machineNos)]);

@@ -455,7 +455,7 @@ function App() {
                         controls={true}
                         loop={true}
                         style={{
-                          maxHeight: "80vh",
+                          maxHeight: "70vh",
                           maxWidth: "72%",
                           position: "relative",
                           zIdex: 99,
@@ -468,7 +468,7 @@ function App() {
                         src={image}
                         alt="Selected"
                         style={{
-                          maxHeight: "80vh",
+                          maxHeight: "70vh",
                           maxWidth: "68%",
                           // marginTop: "120px",
                           // borderTop: "5px solid Darkgray",

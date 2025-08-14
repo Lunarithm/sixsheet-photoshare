@@ -7,6 +7,7 @@ import GalleryHome from './Pages/GalleryHome.jsx'
 import GalleryResult from './Pages/GalleryResult.jsx'
 import ProtectedRoute from './Pages/ProtectedRoute.jsx'
 import LoginPage from './Pages/LoginPage.jsx'
+import GalleryFilter from './Pages/GalleryFilter.jsx'
 
 import {
     createBrowserRouter,
@@ -16,31 +17,38 @@ import {
 const router = createBrowserRouter([
     {
         path: "/media/:shortUUID",
-        element: <App/>
+        element: <App />
     },
     {
         path: "/admin",
         element: (<ProtectedRoute>
-        <Gallery/>
-      </ProtectedRoute>)
-      },
-    {
-        path:'/gallery/home',
-        element: (<ProtectedRoute>
-        <GalleryHome />
-      </ProtectedRoute>)
+            <Gallery />
+        </ProtectedRoute>)
     },
     {
-        path:'/gallery/result',
+        path: '/gallery/home',
+        element: (<ProtectedRoute>
+            <GalleryHome />
+        </ProtectedRoute>)
+    },
+    {
+        path: '/gallery/result',
         element: (
             <ProtectedRoute>
-            <GalleryResult/>
+                <GalleryResult />
             </ProtectedRoute>)
     },
     {
         path: "/login",
-        element: <LoginPage/>
-    }
+        element: <LoginPage />
+    },
+    {
+        path: "/gallery/filter",
+        element: (
+            <ProtectedRoute>
+                <GalleryFilter />
+            </ProtectedRoute>
+        )}
 ]);
 
 createRoot(document.getElementById('root')).render(

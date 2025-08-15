@@ -27,6 +27,10 @@ export default function GalleryFilter({ onSelect, apiUrl = "/api/machines/machin
   const token =
     localStorage.getItem("access_token") || sessionStorage.getItem("access_token");
 
+  if (!token) {
+        navigate("/login")
+      }  
+
   const onSelectDefault = (machineNo) => {
     navigate("/gallery/result", {
       state: { machineNos: [machineNo] } // pass as prop in location.state

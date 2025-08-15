@@ -77,6 +77,13 @@ const [machineNos, setMachineNos] = React.useState(() => {
   const [records, setRecords] = useState([]);   // [{ uuid, source[], event, createdAt, ... }]
   const [totalRecords, setTotalRecords] = useState(0);
 
+  const token =
+    localStorage.getItem("access_token") || sessionStorage.getItem("access_token");
+
+   if (!token) {
+        navigate("/login")
+      }    
+
   // Sync local page/limit when URL query changes (e.g., user pastes a URL)
   useEffect(() => {
     const qp = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
@@ -110,7 +117,10 @@ const [machineNos, setMachineNos] = React.useState(() => {
       };
 
    const { data } = await axios.post(`${import.meta.env.VITE_APIHUB_URL}/media/fetch/machine`, body, {
-        headers: { "Content-Type": "application/json" },
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: token ? `Bearer ${token}` : undefined,
+          },
       });
 
       setCounts(Array.isArray(data?.counts) ? data.counts : []);

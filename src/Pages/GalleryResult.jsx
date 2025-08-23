@@ -35,13 +35,14 @@ function toBackendDate(dtLocal) {
   return `${d} ${t.length >= 8 ? t : `${t}:00`}`;
 }
 
-// Get first .jpg from source array
-function getJpgFromSource(sourceArr) {
+// Get first .jpg or .png from source array
+function getImageFromSource(sourceArr) {
   if (!Array.isArray(sourceArr)) return "";
-  const jpg = sourceArr.find((s) =>
-    String(s?.name || "").toLowerCase().endsWith(".jpg")
-  );
-  return jpg?.path || "";
+  const image = sourceArr.find((s) => {
+    const name = String(s?.name || "").toLowerCase();
+    return name.endsWith(".jpg") || name.endsWith(".png");
+  });
+  return image?.path || "";
 }
 
 export default function MachineResultsPage() {
@@ -283,7 +284,7 @@ const [machineNos, setMachineNos] = React.useState(() => {
             <>
               <Grid container spacing={2}>
                 {records.map((r) => {
-                  const imgUrl = getJpgFromSource(r.source);
+                  const imgUrl = getImageFromSource(r.source);
                   const mNo = r?.event?.machineNo || "";
                   const mName = r?.event?.machineName || "";
                   const createdAt = r?.createdAt

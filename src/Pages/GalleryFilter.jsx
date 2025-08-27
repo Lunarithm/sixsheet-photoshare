@@ -12,35 +12,31 @@ import {
   Stack,
   TextField,
   Typography,
-  Tooltip,
   Button,
 } from "@mui/material";
 
-export default function GalleryFilter({ onSelect, apiUrl = "/api/machines/machineNos" }) {
+export default function GalleryFilter({ apiUrl = "/api/machines/machineNos" }) {
   const [groups, setGroups] = useState([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [machines, setMachines] = useState([]);
   const navigate = useNavigate();
 
   const token =
     localStorage.getItem("access_token") || sessionStorage.getItem("access_token");
 
-  if (!token) {
-        navigate("/login")
-      }  
-
-  const onSelectDefault = (machineNo) => {
-    navigate("/gallery/result", {
-      state: { machineNos: [machineNo] } // pass as prop in location.state
-    });
-  };
-
   const handleLogout = () => {
     localStorage.removeItem("access_token");
     sessionStorage.removeItem("access_token");
-    navigate("/login"); // Change "/login" to your actual login route
+    navigate("/login");
+  };
+
+  // Click on a machineName chip -> navigate and filter by machineName
+  const onSelectMachineName = (name) => {
+    if (!name) return;
+    navigate("/gallery/result", {
+      state: { machineNames: [name] }, // pass machineName(s)
+    });
   };
 
   useEffect(() => {
@@ -56,7 +52,8 @@ export default function GalleryFilter({ onSelect, apiUrl = "/api/machines/machin
             Authorization: token ? `Bearer ${token}` : undefined,
           },
         });
-        const fetchMachines = result.data.data.machine_list || [];
+
+        const fetchMachines = result.data?.data?.machine_list || [];
         const { data } = await axios.post(
           `${import.meta.env.VITE_APIHUB_URL}/media/fetch/machine/by-list`,
           fetchMachines,
@@ -69,6 +66,7 @@ export default function GalleryFilter({ onSelect, apiUrl = "/api/machines/machin
         );
         if (!mounted) return;
 
+        // Group by machineNo
         const map = new Map();
         for (const row of data || []) {
           const key = String(row.machineNo || "").trim();
@@ -80,6 +78,7 @@ export default function GalleryFilter({ onSelect, apiUrl = "/api/machines/machin
           map.set(key, entry);
         }
 
+        // Sort by numeric machineNo if possible, else lexicographic
         const list = Array.from(map.values()).sort((a, b) => {
           const na = parseInt(a.machineNo, 10);
           const nb = parseInt(b.machineNo, 10);
@@ -99,7 +98,7 @@ export default function GalleryFilter({ onSelect, apiUrl = "/api/machines/machin
     return () => {
       mounted = false;
     };
-  }, [apiUrl]);
+  }, [apiUrl, token]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -129,21 +128,12 @@ export default function GalleryFilter({ onSelect, apiUrl = "/api/machines/machin
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        gap={2}
-        alignItems="center"
-        mb={3}
-      >
+      <Stack direction={{ xs: "column", sm: "row" }} gap={2} alignItems="center" mb={3}>
         <Typography variant="h5" sx={{ flexGrow: 1 }}>
           Select a Machine
         </Typography>
 
-        <Button
-          variant="outlined"
-          color="error"
-          onClick={handleLogout}
-        >
+        <Button variant="outlined" color="error" onClick={handleLogout}>
           Logout
         </Button>
 
@@ -156,63 +146,52 @@ export default function GalleryFilter({ onSelect, apiUrl = "/api/machines/machin
       </Stack>
 
       <Grid container spacing={2}>
-        {filtered.map((m) => {
-          const topNames = m.names.slice(0, 2);
-          const extraCount = Math.max(0, m.names.length - 2);
+        {filtered.map((m) => (
+          <Grid item xs={12} sm={6} md={4} lg={3} key={m.machineNo}>
+            <Card elevation={3} sx={{ borderRadius: 3, height: "100%" }}>
+              <CardActionArea
+                sx={{ height: "100%" }}
+                onClick={() => {
+                  // when click card → show ALL machineNames from this card
+                  if (m.names?.length) {
+                    navigate("/gallery/result", {
+                      state: { machineNames: m.names },
+                    });
+                  }
+                }}
+              >
+                <CardContent>
+                  <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Typography variant="h6">#{m.machineNo}</Typography>
+                    <Chip label={`${m.totalCount.toLocaleString()} runs`} />
+                  </Stack>
 
-          return (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={m.machineNo}>
-              <Card elevation={3} sx={{ borderRadius: 3, height: "100%" }}>
-                <CardActionArea
-                  onClick={() => onSelectDefault(m.machineNo)}
-                  sx={{ height: "100%" }}
-                >
-                  <CardContent>
-                    <Stack
-                      direction="row"
-                      alignItems="center"
-                      justifyContent="space-between"
-                    >
-                      <Typography variant="h6">#{m.machineNo}</Typography>
-                      <Chip label={`${m.totalCount.toLocaleString()} runs`} />
+                  <Box mt={1.5}>
+                    <Typography variant="caption" color="text.secondary">
+                      Machine names (tap chip for single filter, or card for all)
+                    </Typography>
+
+                    <Stack direction="row" flexWrap="wrap" gap={0.5} mt={0.5}>
+                      {m.names.map((n) => (
+                        <Chip
+                          key={`${m.machineNo}-${n}`}
+                          label={n}
+                          size="small"
+                          variant="outlined"
+                          clickable
+                          onClick={(e) => {
+                            e.stopPropagation(); // prevent triggering card click
+                            onSelectMachineName(n); // navigate with one name
+                          }}
+                        />
+                      ))}
                     </Stack>
-
-                    <Box mt={1.5}>
-                      <Typography variant="caption" color="text.secondary">
-                        Machine names
-                      </Typography>
-
-                      <Stack
-                        direction="row"
-                        flexWrap="wrap"
-                        gap={0.5}
-                        mt={0.5}
-                      >
-                        {topNames.map((n) => (
-                          <Chip key={n} label={n} size="small" variant="outlined" />
-                        ))}
-                        {extraCount > 0 && (
-                          <Tooltip
-                            title={
-                              <Box>
-                                {m.names.map((n) => (
-                                  <div key={n}>{n}</div>
-                                ))}
-                              </Box>
-                            }
-                            arrow
-                          >
-                            <Chip size="small" label={`+${extraCount} more`} />
-                          </Tooltip>
-                        )}
-                      </Stack>
-                    </Box>
-                  </CardContent>
-                </CardActionArea>
-              </Card>
-            </Grid>
-          );
-        })}
+                  </Box>
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          </Grid>
+        ))}
       </Grid>
 
       {filtered.length === 0 && (

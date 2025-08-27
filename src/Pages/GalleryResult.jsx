@@ -22,6 +22,16 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 const API_URL = "/api/machines/grouped"; // Your POST endpoint
 const PHOTOSHARE_BASE = "https://sixsheet-photoshare-3tu92.ondigitalocean.app/";
 
@@ -33,6 +43,16 @@ function toBackendDate(dtLocal) {
   const [d, t] = dtLocal.split("T");
   if (!d || !t) return "";
   return `${d} ${t.length >= 8 ? t : `${t}:00`}`;
+}
+
+// Convert local datetime string to UTC string (SQL-style or ISO)
+function toBackendUtc(dtLocalStr) {
+  if (!dtLocalStr) return undefined;
+  // if you want ISO: "2025-08-09T16:14:02.813Z"
+  return dayjs(dtLocalStr).utc().toISOString();
+
+  // or if backend expects SQL "YYYY-MM-DD HH:mm:ss":
+  // return dayjs(dtLocalStr).utc().format("YYYY-MM-DD HH:mm:ss");
 }
 
 // Get first .jpg or .png from source array
@@ -49,16 +69,16 @@ export default function MachineResultsPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-// 1) Initialize once (from location.state or sessionStorage)
-const [machineNos, setMachineNos] = React.useState(() => {
-  const fromNav = location.state?.machineNos;
-  if (Array.isArray(fromNav) && fromNav.length) {
-    sessionStorage.setItem("machineNos", JSON.stringify(fromNav));
-    return fromNav;
-  }
-  const cached = sessionStorage.getItem("machineNos");
-  return cached ? JSON.parse(cached) : [];
-});
+  // 1) Initialize once (from location.state or sessionStorage)
+  const [machineNos, setMachineNos] = React.useState(() => {
+    const fromNav = location.state?.machineNos;
+    if (Array.isArray(fromNav) && fromNav.length) {
+      sessionStorage.setItem("machineNos", JSON.stringify(fromNav));
+      return fromNav;
+    }
+    const cached = sessionStorage.getItem("machineNos");
+    return cached ? JSON.parse(cached) : [];
+  });
 
   // ---- query params (pagination) ----
   const [searchParams, setSearchParams] = useSearchParams();
@@ -81,9 +101,9 @@ const [machineNos, setMachineNos] = React.useState(() => {
   const token =
     localStorage.getItem("access_token") || sessionStorage.getItem("access_token");
 
-   if (!token) {
-        navigate("/login")
-      }    
+  if (!token) {
+    navigate("/login")
+  }
 
   // Sync local page/limit when URL query changes (e.g., user pastes a URL)
   useEffect(() => {
@@ -109,19 +129,19 @@ const [machineNos, setMachineNos] = React.useState(() => {
     setError("");
     try {
       const body = {
-        machineNo: machineNos, // <--- send as body parameter (array)
-        startDate: startInput ? toBackendDate(startInput) : undefined,
-        endDate: endInput ? toBackendDate(endInput) : undefined,
+        machineNo: machineNos,
+        startDate: toBackendUtc(startInput),
+        endDate: toBackendUtc(endInput),
         dateField: "createdAt",
         offset,
         limit,
       };
 
-   const { data } = await axios.post(`${import.meta.env.VITE_APIHUB_URL}/media/fetch/machine`, body, {
+      const { data } = await axios.post(`${import.meta.env.VITE_APIHUB_URL}/media/fetch/machine`, body, {
         headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : undefined,
-          },
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
       });
 
       setCounts(Array.isArray(data?.counts) ? data.counts : []);
@@ -193,53 +213,55 @@ const [machineNos, setMachineNos] = React.useState(() => {
       {/* Filters */}
       <Card sx={{ mb: 2, borderRadius: 3 }}>
         <CardContent>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="Start Date"
-                type="datetime-local"
-                value={startInput}
-                onChange={(e) => setStartInput(e.target.value)}
-                InputLabelProps={{ shrink: true }}
-              />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Grid container spacing={2} alignItems="center">
+              <Grid item xs={12} md={4}>
+                <DateTimePicker
+                  label="Start Date"
+                  ampm={false} // 24-hour
+                  value={startInput ? dayjs(startInput) : null}
+                  onChange={(val) => setStartInput(val ? val.format("YYYY-MM-DDTHH:mm") : "")}
+                  slotProps={{
+                    textField: { fullWidth: true, InputLabelProps: { shrink: true } },
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <DateTimePicker
+                  label="End Date"
+                  ampm={false} // 24-hour
+                  value={endInput ? dayjs(endInput) : null}
+                  onChange={(val) => setEndInput(val ? val.format("YYYY-MM-DDTHH:mm") : "")}
+                  slotProps={{
+                    textField: { fullWidth: true, InputLabelProps: { shrink: true } },
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+                  <Button
+                    variant="contained"
+                    onClick={resetToFirstPageAndFetch}
+                    disabled={loading}
+                  >
+                    Apply
+                  </Button>
+                  <Typography variant="body2" color="text.secondary">
+                    Rows:
+                  </Typography>
+                  <Select size="small" value={limit} onChange={handleChangeRowsPerPage}>
+                    {[10, 20, 50, 100].map((n) => (
+                      <MenuItem key={n} value={n}>
+                        {n}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </Stack>
+              </Grid>
             </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="End Date"
-                type="datetime-local"
-                value={endInput}
-                onChange={(e) => setEndInput(e.target.value)}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
-                <Button
-                  variant="contained"
-                  onClick={resetToFirstPageAndFetch}
-                  disabled={loading}
-                >
-                  Apply
-                </Button>
-                <Typography variant="body2" color="text.secondary">
-                  Rows:
-                </Typography>
-                <Select
-                  size="small"
-                  value={limit}
-                  onChange={handleChangeRowsPerPage}
-                >
-                  {[10, 20, 50, 100].map((n) => (
-                    <MenuItem key={n} value={n}>
-                      {n}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </Stack>
-            </Grid>
-          </Grid>
+          </LocalizationProvider>
         </CardContent>
       </Card>
 

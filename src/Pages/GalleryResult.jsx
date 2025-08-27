@@ -69,16 +69,48 @@ export default function MachineResultsPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 1) Initialize once (from location.state or sessionStorage)
+  // ✅ Initialize from navigation state first; fall back to sessionStorage
   const [machineNos, setMachineNos] = React.useState(() => {
-    const fromNav = location.state?.machineNos;
-    if (Array.isArray(fromNav) && fromNav.length) {
-      sessionStorage.setItem("machineNos", JSON.stringify(fromNav));
-      return fromNav;
+    const fromNavNos = location.state?.machineNos;
+    if (Array.isArray(fromNavNos) && fromNavNos.length) {
+      sessionStorage.setItem("machineNos", JSON.stringify(fromNavNos));
+      return fromNavNos;
     }
-    const cached = sessionStorage.getItem("machineNos");
-    return cached ? JSON.parse(cached) : [];
+    const cachedNos = sessionStorage.getItem("machineNos");
+    return cachedNos ? JSON.parse(cachedNos) : [];
   });
+
+  const [machineNames, setMachineNames] = React.useState(() => {
+    const fromNavNames = location.state?.machineNames;
+    if (Array.isArray(fromNavNames) && fromNavNames.length) {
+      sessionStorage.setItem("machineNames", JSON.stringify(fromNavNames));
+      return fromNavNames;
+    }
+    const cachedNames = sessionStorage.getItem("machineNames");
+    return cachedNames ? JSON.parse(cachedNames) : [];
+  });
+
+  // (Optional) when a new navigation happens, refresh from state and prefer machineNames
+  React.useEffect(() => {
+    const fromNavNames = location.state?.machineNames;
+    const fromNavNos = location.state?.machineNos;
+
+    if (Array.isArray(fromNavNames) && fromNavNames.length) {
+      setMachineNames(fromNavNames);
+      sessionStorage.setItem("machineNames", JSON.stringify(fromNavNames));
+
+      // If you want machineName to take precedence and *clear* numbers:
+      setMachineNos([]);
+      sessionStorage.removeItem("machineNos");
+      return;
+    }
+
+    if (Array.isArray(fromNavNos) && fromNavNos.length) {
+      setMachineNos(fromNavNos);
+      sessionStorage.setItem("machineNos", JSON.stringify(fromNavNos));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.key]);
 
   // ---- query params (pagination) ----
   const [searchParams, setSearchParams] = useSearchParams();
@@ -116,7 +148,7 @@ export default function MachineResultsPage() {
 
   // if no selection, go back to picker
   useEffect(() => {
-    if (!machineNos.length) {
+    if (!machineNos.length && !machineNames.length) {
       navigate("/gallery/filter", { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -129,7 +161,8 @@ export default function MachineResultsPage() {
     setError("");
     try {
       const body = {
-        machineNo: machineNos,
+        machineName: machineNames.length ? machineNames : undefined,
+        machineNo: !machineNames.length && machineNos.length ? machineNos : undefined,
         startDate: toBackendUtc(startInput),
         endDate: toBackendUtc(endInput),
         dateField: "createdAt",
@@ -203,6 +236,11 @@ export default function MachineResultsPage() {
         <Typography variant="h5" sx={{ flexGrow: 1 }}>
           Machine Results
         </Typography>
+        <Stack direction="row" gap={1} flexWrap="wrap">
+          {machineNames.length
+            ? machineNames.map((n) => <Chip key={n} label={`Name: ${n}`} />)
+            : machineNos.map((m) => <Chip key={m} label={`#${m}`} />)}
+        </Stack>
         <Stack direction="row" gap={1} flexWrap="wrap">
           {machineNos.map((m) => (
             <Chip key={m} label={`#${m}`} />

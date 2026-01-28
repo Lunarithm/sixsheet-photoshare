@@ -59,3 +59,13 @@
   /* font-weight: normal;
   font-style: normal; */
 }
+
+@font-face {
+    font-family: 'Bricolage Grotesque';
+    src: url('../src/assets/fonts/BricolageGrotesque-VariableFont_opsz,wdth,wght.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'inter';
+    src: url('../src/assets/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+}

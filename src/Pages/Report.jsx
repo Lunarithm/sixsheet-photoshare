@@ -244,8 +244,8 @@ function Report() {
   const multiFilter = async () => {
     try {
       const resultData = await axios.post(
-        // `${import.meta.env.VITE_APIHUB_URL}/report/filter`,
-        `http://localhost:8000/report/filter`,
+        `${import.meta.env.VITE_APIHUB_URL}/report/filter`,
+        // `http://localhost:8000/report/filter`,
         {
           value,
           selectedMachineNo,

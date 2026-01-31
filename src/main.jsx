@@ -9,6 +9,7 @@ import ProtectedRoute from "./Pages/ProtectedRoute.jsx";
 import LoginPage from "./Pages/LoginPage.jsx";
 import GalleryFilter from "./Pages/GalleryFilter.jsx";
 import Report from "./Pages/Report.jsx";
+import SelectPage from "./Pages/pageSelection.jsx"
 
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
@@ -56,9 +57,17 @@ const router = createBrowserRouter([
   {
     path: "/report/",
     element: (
-      // <ProtectedRoute>
+      <ProtectedRoute>
         <Report />
-      // </ProtectedRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/selectPage",
+    element: (
+      <ProtectedRoute>
+        <SelectPage />
+      </ProtectedRoute>
     ),
   },
 ]);

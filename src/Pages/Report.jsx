@@ -69,14 +69,15 @@ function Report() {
   const [filter, setFilter] = useState(false);
   const [rows, setRows] = useState([]);
 
-  console.log("selectedReprint:", selectedReprint);
-
   const [selectedStart, setSelectedStart] = useState(null);
   const [selectedEnd, setSelectedEnd] = useState(null);
   const [countRowPage, setCountRowPage] = useState(1);
   const [countRowAll, setCountRowAll] = useState(0);
   const [allDataPage, setAllDataPage] = useState(0);
   const scrollRef = useRef(null);
+  const scrollRef1 = useRef(null);
+  const scrollRef2 = useRef(null);
+  const calendarRef = useRef(null);
 
   const [ranges, setRanges] = useState([
     {
@@ -85,6 +86,8 @@ function Report() {
       key: "selection",
     },
   ]);
+
+  console.log(selectedStart, selectedEnd, rows)
 
   const [open, setOpen] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
@@ -160,19 +163,50 @@ function Report() {
       const el = scrollRef.current;
       el.scrollLeft = el.scrollWidth;
     }
-  }, [selectedMachineNo, selectedpaymentType, selectedcouponType]);
+  }, [selectedMachineNo]);
+
+  useEffect(() => {
+    if (scrollRef1.current) {
+      const el = scrollRef1.current;
+      el.scrollLeft = el.scrollWidth;
+    }
+  }, [selectedpaymentType]);
+
+  useEffect(() => {
+    if (scrollRef2.current) {
+      const el = scrollRef2.current;
+      el.scrollLeft = el.scrollWidth;
+    }
+  }, [selectedcouponType]);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (calendarRef.current && !calendarRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const dataToApp = async () => {
     try {
       const result = await axios.get(
-        // `${import.meta.env.VITE_APIHUB_URL}/report/${copies}`
-        `http://localhost:8000/report/list?limit=${limit}&offset=${offset}`,
+        `${import.meta.env.VITE_APIHUB_URL}/report/list?limit=${limit}&offset=${offset}`
+        // `http://localhost:8000/report/list?limit=${limit}&offset=${offset}`,
       );
-      console.log(result.data?.data?.rows);
-      console.log(result.data?.data?.count);
       // setCount(result.data?.data?.count);
       // setDataTransaction(result.data?.data?.rows);
-      setRows(result.data?.data?.rows);
+      const data = result.data?.data?.rows.map((r) => ({
+        ...r,
+        fullAmount: Number(r.fullAmount).toFixed(2),
+        discountAmount: Number(r.discountAmount).toFixed(2),
+      }));
+      setRows(data);
       setTotal(Math.ceil(result.data?.data?.count / 100));
       setAllDataPage(result.data?.data?.count);
       setCountRowAll(page * limit);
@@ -188,7 +222,6 @@ function Report() {
   }, [page]);
 
   useEffect(() => {
-    console.log(filter);
     const goData = async () => {
       try {
         if (filter === true) {
@@ -211,7 +244,7 @@ function Report() {
   const multiFilter = async () => {
     try {
       const resultData = await axios.post(
-        // `${import.meta.env.VITE_APIHUB_URL}/report/${copies}`
+        // `${import.meta.env.VITE_APIHUB_URL}/report/filter`,
         `http://localhost:8000/report/filter`,
         {
           value,
@@ -227,10 +260,13 @@ function Report() {
           couponDesc,
         },
       );
-      console.log(resultData.data.data);
-      console.log(resultData.data?.data?.count);
       setTotal(Math.ceil(resultData.data?.data?.count / 100));
-      setRows(resultData.data?.data?.rows);
+      const data = resultData.data?.data?.rows.map((r) => ({
+        ...r,
+        fullAmount: Number(r.fullAmount).toFixed(2),
+        discountAmount: Number(r.discountAmount).toFixed(2),
+      }));
+      setRows(data);
       setAllDataPage(resultData.data?.data?.count);
       setCountRowAll(page * limit);
       setCountRowPage(page * limit - 99);
@@ -240,17 +276,6 @@ function Report() {
   };
 
   const confirmSelected = () => {
-    if (
-      selectedMachineNo.length === 0 &&
-      selectedpaymentType.length === 0 &&
-      selectedcouponType.length === 0 &&
-      value === "" &&
-      selectedStart === null &&
-      selectedReprint === null &&
-      machineName === "" &&
-      couponDesc === ""
-    )
-      return;
     multiFilter();
     setFilter(true);
     setPage(1);
@@ -294,12 +319,20 @@ function Report() {
     setFilter(false);
     setMachineName("");
     setCouponDesc("");
+    setRanges([
+      {
+        startDate: new Date(),
+        endDate: new Date(),
+        key: "selection",
+      },
+    ]);
   };
 
   const download = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:8000/report/list/download",
+        `${import.meta.env.VITE_APIHUB_URL}/report/list/download`,
+        // "http://localhost:8000/report/list/download",
         {
           selectedMachineNo,
           selectedpaymentType,
@@ -341,509 +374,363 @@ function Report() {
   };
 
   return (
-    <ThemeProvider theme={theme3}>
-      <CssBaseline enableColorScheme />
-      <Container
-        maxWidth={false}
-        disableGutters
-        component="main"
-        sx={{
-          // width: "100vw",
-          // height: "100vh",
-          // display: "flex",
-          // flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          textAlign: "center",
-        }}
-      >
-        <Box className="box-all-box-report">
-          <Box className="header-report">
-            <Box className="box-filter-header-report">
-              <FormControl className="formcon-start-report">
-                <Box className="date-input" onClick={() => setOpen(!open)}>
-                  <Typography className="date-text">
-                    {!isSelected ? (
-                      <span className="date-inline">
-                        Date Range
-                        <img src={carenda} width={16} height={16} />
-                      </span>
-                    ) : (
-                      `${dayjs(ranges[0].startDate).format("DD/MM/YYYY")} - 
+        <ThemeProvider theme={theme3}>
+          <CssBaseline enableColorScheme />
+          <Container
+            maxWidth={false}
+            disableGutters
+            component="main"
+            sx={{
+              // width: "100vw",
+              // height: "100vh",
+              // display: "flex",
+              // flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              textAlign: "center",
+            }}
+          >
+            <Box className="box-all-box-report">
+              <Box className="header-report">
+                <Box className="box-filter-header-report">
+                  <FormControl
+                    className="formcon-start-report"
+                    ref={calendarRef}
+                  >
+                    <Box className="date-input" onClick={() => setOpen(!open)}>
+                      <Typography className="date-text">
+                        {!isSelected ? (
+                          <div>
+                            <div className="date-inline">
+                              <div>
+                                <img src={carenda} width={16} height={16} />
+                              </div>
+                              Date Range
+                            </div>
+                          </div>
+                        ) : (
+                          `${dayjs(ranges[0].startDate).format("DD/MM/YYYY")} - 
      ${dayjs(ranges[0].endDate).format("DD/MM/YYYY")}`
-                    )}
-                  </Typography>
-                </Box>
+                        )}
+                      </Typography>
+                    </Box>
 
-                <Box className={`calendar-box ${open ? "show" : ""}`}>
-                  <DateRangePicker
-                    ranges={ranges}
-                    onChange={handleSelect}
-                    maxDate={new Date()}
-                    showDateDisplay={false}
-                    moveRangeOnFirstSelection={false}
-                  />
-                </Box>
-              </FormControl>
-
-              <FormControl className="formcon-machine-report">
-                <Box className="formcon-machine-report-in" ref={scrollRef}>
-                  <Autocomplete
-                    multiple
-                    disableCloseOnSelect
-                    options={optionsMachineNo}
-                    value={optionsMachineNo.filter((opt) =>
-                      selectedMachineNo.includes(opt.value),
-                    )}
-                    isOptionEqualToValue={(option, value) =>
-                      option.value === value.value
-                    }
-                    getOptionLabel={(option) => option.label}
-                    onChange={(event, newValue) => {
-                      setSelectedMachineNo(newValue.map((item) => item.value));
-                    }}
-                    renderOption={(props, option, { selected }) => (
-                      <li {...props}>
-                        <Checkbox checked={selected} sx={{ mr: 1 }} />
-                        {option.label}
-                      </li>
-                    )}
-                    renderTags={(value, getTagProps) =>
-                      value.map((option, index) => (
-                        <Chip
-                          key={option.value}
-                          label={option.label}
-                          size="small"
-                          {...getTagProps({ index })}
-                        />
-                      ))
-                    }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        placeholder="Machine No."
-                        size="small"
+                    <Box className={`calendar-box ${open ? "show" : ""}`}>
+                      <DateRangePicker
+                        ranges={ranges}
+                        onChange={handleSelect}
+                        maxDate={new Date()}
+                        showDateDisplay={false}
+                        moveRangeOnFirstSelection={false}
                       />
-                    )}
-                  />
-                </Box>
-              </FormControl>
+                    </Box>
+                  </FormControl>
 
-              <FormControl className="formcon-search-report">
-                <TextField
-                className="coupon-desc-input"
-                  placeholder="Machine Name"
-                  variant="outlined"
-                  size="small"
-                  value={machineName}
-                  onChange={(e) => setMachineName(e.target.value)}
-                />
-              </FormControl>
+                  <FormControl className="formcon-machine-report">
+                    <Box className="formcon-machine-report-in" ref={scrollRef}>
+                      <Autocomplete
+                        multiple
+                        disableCloseOnSelect
+                        options={optionsMachineNo}
+                        value={optionsMachineNo.filter((opt) =>
+                          selectedMachineNo.includes(opt.value),
+                        )}
+                        isOptionEqualToValue={(option, value) =>
+                          option.value === value.value
+                        }
+                        getOptionLabel={(option) => option.label}
+                        onChange={(event, newValue) => {
+                          setSelectedMachineNo(
+                            newValue.map((item) => item.value),
+                          );
+                        }}
+                        renderOption={(props, option, { selected }) => (
+                          <li {...props}>
+                            <Checkbox checked={selected} sx={{ mr: 1 }} />
+                            {option.label}
+                          </li>
+                        )}
+                        renderTags={(value, getTagProps) =>
+                          value.map((option, index) => (
+                            <Chip
+                              key={option.value}
+                              label={option.label}
+                              size="small"
+                              {...getTagProps({ index })}
+                            />
+                          ))
+                        }
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            placeholder="Machine No."
+                            size="small"
+                          />
+                        )}
+                      />
+                    </Box>
+                  </FormControl>
 
-              <FormControl className="formcon-payment-report">
-                <Box className="formcon-payment-report-in" ref={scrollRef}>
-                  <Select
-                    className="selected-report"
-                    multiple
-                    displayEmpty
-                    value={selectedpaymentType}
-                    onChange={(e) =>
-                      setSelectedPaymentType(
-                        typeof e.target.value === "string"
-                          ? e.target.value.split(",")
-                          : e.target.value,
-                      )
-                    }
-                    renderValue={(selected) => {
-                      if (selected.length === 0) {
-                        return "Payment Type";
+                  <FormControl className="formcon-search-report">
+                    <TextField
+                      label={
+                        <span className="text-search-img">Machine Name</span>
                       }
+                      className="coupon-desc-input"
+                      // placeholder="Machine Name"
+                      variant="outlined"
+                      size="small"
+                      value={machineName}
+                      onChange={(e) => setMachineName(e.target.value)}
+                    />
+                  </FormControl>
 
-                      return (
-                        <Box
-                          sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}
-                        >
-                          {selected.map((value) => {
-                            const label =
-                              optionsPaymentType.find((p) => p.value === value)
-                                ?.label || value;
+                  <FormControl className="formcon-payment-report">
+                    <Box className="formcon-payment-report-in" ref={scrollRef1}>
+                      <Select
+                        className="selected-report"
+                        multiple
+                        displayEmpty
+                        value={selectedpaymentType}
+                        onChange={(e) =>
+                          setSelectedPaymentType(
+                            typeof e.target.value === "string"
+                              ? e.target.value.split(",")
+                              : e.target.value,
+                          )
+                        }
+                        renderValue={(selected) => {
+                          if (selected.length === 0) {
+                            return "Payment Type";
+                          }
 
-                            return (
-                              <Chip
-                                key={value}
-                                label={label}
-                                onDelete={() =>
-                                  setSelectedPaymentType((prev) =>
-                                    prev.filter((item) => item !== value),
-                                  )
-                                }
-                                onMouseDown={(event) => {
-                                  event.stopPropagation();
-                                }}
-                              />
-                            );
-                          })}
-                        </Box>
-                      );
-                    }}
-                  >
-                    {optionsPaymentType.map((payment) => (
-                      <MenuItem key={payment.value} value={payment.value}>
-                        <Checkbox
-                          checked={selectedpaymentType.includes(payment.value)}
-                        />
-                        <ListItemText primary={payment.label} />
-                      </MenuItem>
-                    ))}
-                  </Select>
+                          return (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 0.5,
+                              }}
+                            >
+                              {selected.map((value) => {
+                                const label =
+                                  optionsPaymentType.find(
+                                    (p) => p.value === value,
+                                  )?.label || value;
+
+                                return (
+                                  <Chip
+                                    key={value}
+                                    label={label}
+                                    onDelete={() =>
+                                      setSelectedPaymentType((prev) =>
+                                        prev.filter((item) => item !== value),
+                                      )
+                                    }
+                                    onMouseDown={(event) => {
+                                      event.stopPropagation();
+                                    }}
+                                  />
+                                );
+                              })}
+                            </Box>
+                          );
+                        }}
+                      >
+                        {optionsPaymentType.map((payment) => (
+                          <MenuItem key={payment.value} value={payment.value}>
+                            <Checkbox
+                              checked={selectedpaymentType.includes(
+                                payment.value,
+                              )}
+                            />
+                            <ListItemText primary={payment.label} />
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </Box>
+                  </FormControl>
                 </Box>
-              </FormControl>
-            </Box>
+              </Box>
 
-            <Box className="box-button-header-report">
-              <Button
-                className="button-download-report"
-                onClick={() => download()}
-              >
-                <img src={save} alt="thumbnail" className="img-for-save" />
-              </Button>
-              <Button
-                className="button-download-report"
-                onClick={() => refresh()}
-              >
-                <RefreshIcon
-                  sx={{
-                    color: "black",
-                  }}
-                />
-              </Button>
-            </Box>
-          </Box>
+              <Box className="header-report2">
+                <Box className="box-filter-header-report2">
+                  <FormControl className="formcon-coupon-report">
+                    <Box className="formcon-coupon-report-in" ref={scrollRef2}>
+                      <Select
+                        className="selected-report"
+                        multiple
+                        displayEmpty
+                        value={selectedcouponType}
+                        onChange={(e) =>
+                          setSelectedCouponType(
+                            typeof e.target.value === "string"
+                              ? e.target.value.split(",")
+                              : e.target.value,
+                          )
+                        }
+                        renderValue={(selected) => {
+                          if (selected.length === 0) {
+                            return "Coupon Type";
+                          }
 
-          <Box className="header-report2">
-            <Box className="box-filter-header-report2">
-              <FormControl className="formcon-coupon-report">
-                <Box className="formcon-coupon-report-in" ref={scrollRef}>
-                  <Select
-                    className="selected-report"
-                    multiple
-                    displayEmpty
-                    value={selectedcouponType}
-                    onChange={(e) =>
-                      setSelectedCouponType(
-                        typeof e.target.value === "string"
-                          ? e.target.value.split(",")
-                          : e.target.value,
-                      )
-                    }
-                    renderValue={(selected) => {
-                      if (selected.length === 0) {
-                        return "Coupon Type";
+                          return (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 0.5,
+                              }}
+                            >
+                              {selected.map((value) => {
+                                const label =
+                                  optionsCouponType.find(
+                                    (p) => p.value === value,
+                                  )?.label || value;
+
+                                return (
+                                  <Chip
+                                    key={value}
+                                    label={label}
+                                    onDelete={() =>
+                                      setSelectedCouponType((prev) =>
+                                        prev.filter((item) => item !== value),
+                                      )
+                                    }
+                                    onMouseDown={(event) => {
+                                      event.stopPropagation();
+                                    }}
+                                  />
+                                );
+                              })}
+                            </Box>
+                          );
+                        }}
+                      >
+                        {optionsCouponType.map((coupon) => (
+                          <MenuItem key={coupon.value} value={coupon.value}>
+                            <Checkbox
+                              checked={selectedcouponType.includes(
+                                coupon.value,
+                              )}
+                            />
+                            <ListItemText primary={coupon.label} />
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </Box>
+                  </FormControl>
+
+                  <FormControl className="formcon-search-report">
+                    <TextField
+                      label={
+                        <span className="text-search-img">Coupon Desc</span>
                       }
+                      className="coupon-desc-input"
+                      // placeholder="Coupon Desc"
+                      variant="outlined"
+                      size="small"
+                      value={couponDesc}
+                      onChange={(e) => setCouponDesc(e.target.value)}
+                    />
+                  </FormControl>
 
-                      return (
-                        <Box
-                          sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}
-                        >
-                          {selected.map((value) => {
-                            const label =
-                              optionsCouponType.find((p) => p.value === value)
-                                ?.label || value;
-
-                            return (
-                              <Chip
-                                key={value}
-                                label={label}
-                                onDelete={() =>
-                                  setSelectedCouponType((prev) =>
-                                    prev.filter((item) => item !== value),
-                                  )
-                                }
-                                onMouseDown={(event) => {
-                                  event.stopPropagation();
-                                }}
-                              />
-                            );
-                          })}
-                        </Box>
-                      );
-                    }}
-                  >
-                    {optionsCouponType.map((coupon) => (
-                      <MenuItem key={coupon.value} value={coupon.value}>
-                        <Checkbox
-                          checked={selectedcouponType.includes(coupon.value)}
-                        />
-                        <ListItemText primary={coupon.label} />
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </Box>
-              </FormControl>
-
-              <FormControl className="formcon-search-report">
-                <TextField
-                  className="coupon-desc-input"
-                  placeholder="Copupon Desc"
-                  variant="outlined"
-                  size="small"
-                  value={couponDesc}
-                  onChange={(e) => setCouponDesc(e.target.value)}
-                />
-              </FormControl>
-
-              <FormControl className="formcon-reprint-report">
-                <Select
-                  className="selected-report"
-                  displayEmpty
-                  value={selectedReprint || ""}
-                  renderValue={(selectedReprint) => {
-                    if (selectedReprint === "" || selectedReprint == null)
-                      return "Reprint";
-                    const found = optionsReprint.find(
-                      (m) => m.value === selectedReprint,
-                    );
-                    return found ? found.label : "Reprint";
-                  }}
-                >
-                  {optionsReprint.map((reprint) => (
-                    <MenuItem
-                      key={reprint.value}
-                      value={reprint.value}
-                      onClick={() => {
-                        setSelectedReprint((prev) =>
-                          prev === reprint.value ? null : reprint.value,
+                  <FormControl className="formcon-reprint-report">
+                    <Select
+                      className="selected-report"
+                      displayEmpty
+                      value={selectedReprint || ""}
+                      renderValue={(selectedReprint) => {
+                        if (selectedReprint === "" || selectedReprint == null)
+                          return "Reprint";
+                        const found = optionsReprint.find(
+                          (m) => m.value === selectedReprint,
                         );
-                        console.log(reprint.label);
-                        console.log(reprint.value);
+                        return found ? found.label : "Reprint";
                       }}
                     >
-                      <ListItemText primary={<span>{reprint?.label}</span>} />
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <FormControl className="formcon-search-report">
-                <TextField
-                  label={
-                    <span className="text-search-img">
-                      <img
-                        src={SearchIcon}
-                        alt="search"
-                        width={14}
-                        height={14}
-                      />
-                      Search...
-                    </span>
-                  }
-                  variant="outlined"
-                  size="small"
-                  value={value}
-                  onChange={(e) => setValue(e.target.value)}
-                />
-              </FormControl>
-
-              <Button
-                className="buttom-report"
-                onClick={() => confirmSelected()}
-              >
-                Apply
-              </Button>
-              <Button className="buttom-report-clear" onClick={() => clear()}>
-                Clear Filter
-              </Button>
-            </Box>
-          </Box>
-
-          <Box className="box-body-report">
-            <TableContainer component={Paper} className="table-contrain-report">
-              <Table size="small" stickyHeader>
-                {loading ? (
-                  <div className="loading-in-report">
-                    <ClipLoader color="#f4f0d3" loading={loading} size={100} />
-                  </div>
-                ) : (
-                  <>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell
-                          align="center"
-                          className="table-cell-mchine-no"
+                      {optionsReprint.map((reprint) => (
+                        <MenuItem
+                          key={reprint.value}
+                          value={reprint.value}
+                          onClick={() => {
+                            setSelectedReprint((prev) =>
+                              prev === reprint.value ? null : reprint.value,
+                            );
+                          }}
                         >
-                          Transaction ID
-                        </TableCell>
-                        <TableCell
-                          align="center"
-                          className="table-cell-mchine-no"
-                        >
-                          Phone No.
-                        </TableCell>
-                        <TableCell
-                          align="center"
-                          className="table-cell-mchine-no"
-                        >
-                          Machine No.
-                        </TableCell>
-                        <TableCell
-                          align="center"
-                          className="table-cell-mchine-no"
-                        >
-                          Machine Name
-                        </TableCell>
-                        <TableCell align="center" className="table-cell-full">
-                          Full AMT
-                        </TableCell>
-                        <TableCell align="center" className="table-cell-net">
-                          Net AMT
-                        </TableCell>
-                        <TableCell
-                          align="center"
-                          className="table-cell-mchine-no"
-                        >
-                          Coupon Type
-                        </TableCell>
-                        <TableCell
-                          align="center"
-                          className="table-cell-mchine-no"
-                        >
-                          Coupon Code
-                        </TableCell>
-                        <TableCell
-                          align="center"
-                          className="table-cell-mchine-no"
-                        >
-                          Coupon Desc
-                        </TableCell>
-                        <TableCell
-                          align="center"
-                          className="table-cell-mchine-no"
-                        >
-                          Payment Type
-                        </TableCell>
-                        <TableCell
-                          align="center"
-                          className="table-cell-mchine-no"
-                        >
-                          Transaction At
-                        </TableCell>
-                        <TableCell align="center" className="table-cell-copies">
-                          Reprint
-                        </TableCell>
-                        <TableCell align="center" className="table-cell-copies">
-                          Copies
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-
-                    <TableBody>
-                      {rows?.map((row, index) => (
-                        <TableRow key={row.tId || index}>
-                          <TableCell align="center">
-                            {row.transactionId || "-"}
-                          </TableCell>
-                          <TableCell align="center">
-                            {row.phoneNo || "-"}
-                          </TableCell>
-                          <TableCell align="center">
-                            {row.machineNo || "-"}
-                          </TableCell>
-                          <TableCell align="center">
-                            {row.machineName || "-"}
-                          </TableCell>
-                          <TableCell align="center">
-                            {row.fullAmount || "-"}
-                          </TableCell>
-                          <TableCell align="center">
-                            {row.discountAmount || "-"}
-                          </TableCell>
-                          <TableCell align="center">
-                            <LocalOfferOutlinedIcon
-                              sx={{
-                                stroke:
-                                  row.couponType === "DC"
-                                    ? "#C70EEC"
-                                    : "#9C9C9C",
-                                fill: "none",
-                                strokeWidth: 2,
-                              }}
-                            />{" "}
-                            <img
-                              src={
-                                row.couponType === "FREE"
-                                  ? freeIcon
-                                  : freeNoSelected
-                              }
-                              alt="free"
-                              width={24}
-                              height={24}
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            {row.couponCode || "-"}
-                          </TableCell>
-                          <TableCell align="center">
-                            {row.couponDesc || "-"}
-                          </TableCell>
-                          <TableCell align="center">
-                            <CreditCardIcon
-                              sx={{
-                                color:
-                                  row.paymentType === "CC"
-                                    ? "#38A9F4"
-                                    : "#9C9C9C",
-                              }}
-                            />{" "}
-                            <img
-                              src={
-                                row.paymentType === "DP" ? moneyGold : moneyGray
-                              }
-                              alt="DP"
-                              width={24}
-                              height={24}
-                            />
-                          </TableCell>
-                          <TableCell align="center">{row.createdAt}</TableCell>
-                          <TableCell align="center">
-                            <Checkbox
-                              checked={Boolean(row.isreprinted)}
-                              disabled
-                              icon={
-                                <span
-                                  style={{
-                                    width: 18,
-                                    height: 18,
-                                    border: "2px solid #9C9C9C",
-                                    borderRadius: 2,
-                                    display: "inline-block",
-                                    backgroundColor: "white",
-                                  }}
-                                />
-                              }
-                              checkedIcon={
-                                <span
-                                  style={{
-                                    width: 18,
-                                    height: 18,
-                                    borderRadius: 4,
-                                    backgroundColor: "#22C55E",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                  }}
-                                >
-                                  <CheckIcon
-                                    sx={{ fontSize: 14, color: "white" }}
-                                  />
-                                </span>
-                              }
-                            />
-                          </TableCell>
-                          <TableCell align="center">{row.copies}</TableCell>
-                        </TableRow>
+                          <ListItemText
+                            primary={<span>{reprint?.label}</span>}
+                          />
+                        </MenuItem>
                       ))}
-                    </TableBody>
-                    {/* {loading ? (
+                    </Select>
+                  </FormControl>
+
+                  <FormControl className="formcon-search-report">
+                    <TextField
+                      label={
+                        <span className="text-search-img">
+                          <img
+                            src={SearchIcon}
+                            alt="search"
+                            width={14}
+                            height={14}
+                          />
+                          Search...
+                        </span>
+                      }
+                      variant="outlined"
+                      size="small"
+                      value={value}
+                      onChange={(e) => setValue(e.target.value)}
+                    />
+                  </FormControl>
+
+                  <Button
+                    className="buttom-report"
+                    onClick={() => confirmSelected()}
+                  >
+                    Apply
+                  </Button>
+                  <Button
+                    className="buttom-report-clear"
+                    onClick={() => clear()}
+                  >
+                    Clear Filter
+                  </Button>
+                  <Box className="box-button-header-report">
+                    <Button
+                      className="button-download-report"
+                      onClick={() => download()}
+                    >
+                      <img
+                        src={save}
+                        alt="thumbnail"
+                        className="img-for-save"
+                      />
+                    </Button>
+                    <Button
+                      className="button-download-report"
+                      onClick={() => refresh()}
+                    >
+                      <RefreshIcon
+                        sx={{
+                          color: "black",
+                        }}
+                      />
+                    </Button>
+                  </Box>
+                </Box>
+              </Box>
+
+              <Box className="box-body-report">
+                <TableContainer
+                  component={Paper}
+                  className="table-contrain-report"
+                >
+                  <Table size="small" stickyHeader>
+                    {loading ? (
                       <div className="loading-in-report">
                         <ClipLoader
                           color="#f4f0d3"
@@ -852,69 +739,237 @@ function Report() {
                         />
                       </div>
                     ) : (
-                      <> */}
-                    {rows?.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={12} align="center">
-                          ไม่พบข้อมูล
-                        </TableCell>
-                      </TableRow>
+                      <>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell
+                              align="center"
+                              className="table-cell-mchine-no"
+                            >
+                              Transaction ID
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              className="table-cell-phone-no"
+                            >
+                              Phone No.
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              className="table-cell-mchine-no"
+                            >
+                              Machine No.
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              className="table-cell-mchine-no"
+                            >
+                              Machine Name
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              className="table-cell-full"
+                            >
+                              Full AMT
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              className="table-cell-net"
+                            >
+                              Net AMT
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              className="table-cell-mchine-no"
+                            >
+                              Coupon Type
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              className="table-cell-mchine-no"
+                            >
+                              Coupon Code
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              className="table-cell-mchine-no"
+                            >
+                              Coupon Desc
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              className="table-cell-mchine-no"
+                            >
+                              Payment Type
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              className="table-cell-mchine-no"
+                            >
+                              Transaction At
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              className="table-cell-copies"
+                            >
+                              Reprint
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              className="table-cell-copies"
+                            >
+                              Copies
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+
+                        <TableBody>
+                          {rows?.map((row, index) => (
+                            <TableRow key={row.tId || index}>
+                              <TableCell align="center">
+                                {row.transactionId || "-"}
+                              </TableCell>
+                              <TableCell align="center">
+                                {row.phoneNo || "-"}
+                              </TableCell>
+                              <TableCell align="center">
+                                {row.machineNo || "-"}
+                              </TableCell>
+                              <TableCell align="center">
+                                {row.machineName || "-"}
+                              </TableCell>
+                              <TableCell align="center">
+                                {row.fullAmount || "-"}
+                              </TableCell>
+                              <TableCell align="center">
+                                {row.discountAmount || "-"}
+                              </TableCell>
+                              <TableCell align="center">
+                                <LocalOfferOutlinedIcon
+                                  sx={{
+                                    stroke:
+                                      row.couponType === "DC"
+                                        ? "#C70EEC"
+                                        : "#9C9C9C",
+                                    fill: "none",
+                                    strokeWidth: 2,
+                                  }}
+                                />{" "}
+                                <img
+                                  src={
+                                    row.couponType === "FREE"
+                                      ? freeIcon
+                                      : freeNoSelected
+                                  }
+                                  alt="free"
+                                  width={24}
+                                  height={24}
+                                />
+                              </TableCell>
+                              <TableCell align="center">
+                                {row.couponCode || "-"}
+                              </TableCell>
+                              <TableCell align="center">
+                                {row.couponDesc || "-"}
+                              </TableCell>
+                              <TableCell align="center">
+                                <CreditCardIcon
+                                  sx={{
+                                    color:
+                                      row.paymentType === "CC"
+                                        ? "#38A9F4"
+                                        : "#9C9C9C",
+                                  }}
+                                />{" "}
+                                <img
+                                  src={
+                                    row.paymentType === "DP"
+                                      ? moneyGold
+                                      : moneyGray
+                                  }
+                                  alt="DP"
+                                  width={24}
+                                  height={24}
+                                />
+                              </TableCell>
+                              <TableCell align="center">
+                                {row.createdAt}
+                              </TableCell>
+                              <TableCell align="center">
+                                <Checkbox
+                                  checked={Boolean(row.isreprinted)}
+                                  disabled
+                                  icon={
+                                    <span
+                                      style={{
+                                        width: 18,
+                                        height: 18,
+                                        border: "2px solid #9C9C9C",
+                                        borderRadius: 2,
+                                        display: "inline-block",
+                                        backgroundColor: "white",
+                                      }}
+                                    />
+                                  }
+                                  checkedIcon={
+                                    <span
+                                      style={{
+                                        width: 18,
+                                        height: 18,
+                                        borderRadius: 4,
+                                        backgroundColor: "#22C55E",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                      }}
+                                    >
+                                      <CheckIcon
+                                        sx={{ fontSize: 14, color: "white" }}
+                                      />
+                                    </span>
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell align="center">{row.copies}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                        {rows?.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={12} align="center">
+                              ไม่พบข้อมูล
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </>
                     )}
-                    {/* </>
-                    )} */}
-                  </>
-                )}
-              </Table>
-            </TableContainer>
-          </Box>
+                  </Table>
+                </TableContainer>
+              </Box>
 
-          <Box className="footer-report">
-            <Grid className="grid-footer-report">
-              <Typography>
-                Showing {countRowPage} to{" "}
-                {countRowAll > allDataPage ? allDataPage : countRowAll} of{" "}
-                {allDataPage} entries
-              </Typography>
-            </Grid>
-            <Grid className="grid-footer-report">
-              <Pagination
-                variant="outlined"
-                shape="rounded"
-                count={total}
-                page={page}
-                onChange={(event, page) => {
-                  console.log("new page:", page);
-                  setPage(page);
-                }}
-              />
-            </Grid>
-          </Box>
-        </Box>
-
-        {/* <Box
-          sx={{
-            position: "fixed",
-            bottom: 0,
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            padding: "32px",
-            // backgroundColor: "transparent",
-          }}
-        >
-          <Typography
-            color="#F4F0D3"
-            fontFamily="Boyrun"
-            fontSize="1.2em"
-            fontWeight={200}
-            textAlign="center"
-          >
-            POWERED BY SIXSHEET
-          </Typography>
-        </Box> */}
-      </Container>
-    </ThemeProvider>
+              <Box className="footer-report">
+                <Grid className="grid-footer-report">
+                  <Typography>
+                    Showing {countRowPage} to{" "}
+                    {countRowAll > allDataPage ? allDataPage : countRowAll} of{" "}
+                    {allDataPage} entries
+                  </Typography>
+                </Grid>
+                <Grid className="grid-footer-report">
+                  <Pagination
+                    variant="outlined"
+                    shape="rounded"
+                    count={total}
+                    page={page}
+                    onChange={(event, page) => {
+                      setPage(page);
+                    }}
+                  />
+                </Grid>
+              </Box>
+            </Box>
+          </Container>
+        </ThemeProvider>
   );
 }
 

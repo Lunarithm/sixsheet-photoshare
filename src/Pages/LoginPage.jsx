@@ -51,7 +51,9 @@ export default function LoginPage() {
       const user = res.data?.data || res.data?.user;
       if (user) localStorage.setItem("user", JSON.stringify(user));
 
-      navigate("/gallery/filter");
+      // navigate("/report");
+      navigate("/selectPage");
+      // navigate("/gallery/filter");
     } catch (err) {
       const status = err?.response?.status;
       if (status === 400) setErrorMsg("Username and password are required.");

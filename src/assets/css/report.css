@@ -72,7 +72,20 @@
   height: 100%;
 }
 
-.formcon-search-report,
+.formcon-search-report{
+  background-color: white;
+  max-width: 12vw !important;
+  min-width: 12vw !important;
+  margin-right: 0.3em !important;
+  margin-left: 0.3em !important;
+  justify-content: flex-start !important;
+  display: flex !important;
+  text-align: center !important;
+}
+.formcon-search-report .MuiOutlinedInput-input {
+  height: 1.6em !important;
+}
+
 .formcon-payment-report,
 .formcon-reprint-report {
   background-color: white;
@@ -91,7 +104,7 @@
   overflow-y: hidden;
 }
 .formcon-payment-report-in .MuiSelect-select {
-   min-width: 9vw !important;
+  min-width: 9vw !important;
   display: flex !important;
   align-items: center;
   flex-wrap: nowrap !important;
@@ -103,7 +116,7 @@
   align-items: center;
   white-space: nowrap;
 }
-.formcon-payment-report-in .MuiChip-root {    
+.formcon-payment-report-in .MuiChip-root {
   height: 20px;
   font-size: 0.72rem;
 }
@@ -124,7 +137,7 @@
   overflow-y: hidden;
 }
 .formcon-coupon-report-in .MuiSelect-select {
-   min-width: 9vw !important;
+  min-width: 9vw !important;
   display: flex !important;
   align-items: center;
   flex-wrap: nowrap !important;
@@ -136,7 +149,7 @@
   align-items: center;
   white-space: nowrap;
 }
-.formcon-coupon-report-in .MuiChip-root {    
+.formcon-coupon-report-in .MuiChip-root {
   height: 20px;
   font-size: 0.72rem;
 }
@@ -197,7 +210,7 @@
 }
 
 .buttom-report {
-  margin-left: 2em !important;
+  margin-left: 1.2em !important;
   width: 6.4vw !important;
   height: 2.8em !important;
   background-color: #2563eb !important;
@@ -217,13 +230,13 @@
 }
 
 .button-download-report {
-  outline: 2px solid #cbd5e1 !important;
-  margin-left: 0.5em !important;
+  margin-left: 0.2em !important;
   width: 2.6em !important;
   height: 2.6em !important;
   padding: 0 !important;
   min-width: unset !important;
-  border-radius: 0 !important;
+  border: 2px solid #cbd5e1 !important;
+  border-radius: 4px !important;
   display: flex !important;
   align-items: center;
   justify-content: center;
@@ -234,7 +247,7 @@
   justify-content: flex-end;
   display: flex;
   height: 100%;
-  width: 50%;
+  width: 30%;
   align-items: center;
   align-content: center;
   /* background-color: red; */
@@ -309,7 +322,10 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 40px;
+  height: 100%;
+  text-align: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 @media screen and (orientation: portrait) {
@@ -344,6 +360,12 @@
   font-weight: 600 !important;
 }
 
+.table-cell-phone-no {
+  width: 4vw !important;
+  font-size: 0.8em !important;
+  font-weight: 600 !important;
+}
+
 .table-cell-full {
   width: 6vw !important;
   font-size: 0.8em !important;
@@ -355,9 +377,3 @@
   font-size: 0.8em !important;
   font-weight: 600 !important;
 }
-
-.coupon-desc-input input::placeholder {
-  color: #20211a;
-  opacity: 1; 
-}
-

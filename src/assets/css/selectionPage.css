@@ -1,0 +1,65 @@
+.go-report-btn {
+  /* background-color: black !important; */
+  outline: 2px solid black !important;
+  height: 20vh !important;
+  width: 60vw !important;
+  border-radius: 10px !important;
+}
+.go-report-btn:hover {
+  outline: 2px solid #2196f3 !important;
+}
+
+.text-btn {
+  font-size: 4em !important;
+  text-transform: capitalize;
+  color: black;
+}
+
+.header-selected {
+  height: 64vh;
+  width: 100%;
+  background-color: white;
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center !important;
+  align-items: center;
+  align-content: center;
+}
+
+.box-btn-gallery {
+  margin-top: 1em;
+}
+
+.box-all-box-selected {
+  margin: 4em !important;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+}
+
+.logout-btn-box {
+  margin-top: 4em;
+  align-items: end;
+  justify-content: flex-end !important;
+  display: flex !important;
+  margin-right: 2em;
+  background-color: aqua;
+}
+
+.logout-btn {
+  height: 6vh !important;
+  width: 6vw !important;
+}
+
+.grid-select-header {
+  margin-top: 3em;
+  align-items: center;
+  display: flex !important;
+  /* background-color: aqua; */
+  text-align: center !important;
+  align-items: center;
+  justify-content: center;
+  justify-items: center;
+}
+
+.text-select-header{
+    font-size: 4em !important;
+}

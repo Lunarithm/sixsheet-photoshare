@@ -49,4 +49,35 @@ const theme2 = createTheme({
       },
 });
 
-export {theme2,theme}
+const theme3 = createTheme({
+    palette: {
+        background: {
+            default: "aliceblue"
+        },
+    },
+    typography: {
+        fontFamily: [
+            'Baloo Bhai',
+            'Roboto',
+            '"Helvetica Neue"',
+            'Arial',
+            'sans-serif'
+        ].join(',')
+    },
+    components: {
+        MuiCssBaseline: {
+          styleOverrides: `
+             body {
+              width: 1;
+              height: 300px;
+              // background-color: skyblue;
+              background-image: url(${photoPic});
+              background-repeat: no-repeat;
+              background-position: left top;
+            }
+          `,
+        },
+      },
+});
+
+export {theme3, theme2,theme}

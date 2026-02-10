@@ -32,6 +32,7 @@ import { saveAs } from "file-saver";
 import QRCode from "react-qr-code";
 import src from "./assets/cap.png";
 import "./assets/font.css";
+import "./assets/css/photoShare.css";
 import qrIcon from "./assets/Group 58.png";
 function App() {
   const [loading, setLoading] = useState(true);
@@ -85,7 +86,7 @@ function App() {
       const result = await axios.get(
         `${import.meta.env.VITE_APIHUB_URL}/media/${shortUUID}`
       );
-      console.log(import.meta.env.VITE_APIHUB_URL);
+      console.log(result)
       const png = result.data.data.source[0].path;
       let mp4 = "";
       if (result?.data?.data?.source[1]?.path) {
@@ -206,12 +207,7 @@ function App() {
           </Grid>
           <Grid item size={{ xs: 10, md: 12 }}>
             <Typography
-              color="#F4F0D3"
-              fontFamily="PPNeueMachinaUltrabold"
-              fontSize="1.5em"
-              textAlign="center"
-              paddingBottom="1em"
-              paddingTop="1em"
+              className="text-dowload-photo-share"
             >
               DOWNLOAD* Your file
             </Typography>

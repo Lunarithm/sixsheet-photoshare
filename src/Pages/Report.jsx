@@ -209,8 +209,8 @@ function Report() {
   const dataToApp = async () => {
     try {
       const result = await axios.get(
-        // `${import.meta.env.VITE_APIHUB_URL}/report/list?limit=${limit}&offset=${offset}`,
-        `http://localhost:8000/report/list?limit=${limit}&offset=${offset}`,
+        `${import.meta.env.VITE_APIHUB_URL}/report/list?limit=${limit}&offset=${offset}`,
+        // `http://localhost:8000/report/list?limit=${limit}&offset=${offset}`,
       );
       // setCount(result.data?.data?.count);
       // setDataTransaction(result.data?.data?.rows);
@@ -257,8 +257,8 @@ function Report() {
   const multiFilter = async () => {
     try {
       const resultData = await axios.post(
-        // `${import.meta.env.VITE_APIHUB_URL}/report/filter`,
-        `http://localhost:8000/report/filter`,
+        `${import.meta.env.VITE_APIHUB_URL}/report/filter`,
+        // `http://localhost:8000/report/filter`,
         {
           value,
           selectedMachineNo,
@@ -344,8 +344,8 @@ function Report() {
   const download = async () => {
     try {
       const response = await axios.post(
-        // `${import.meta.env.VITE_APIHUB_URL}/report/list/download`,
-        "http://localhost:8000/report/list/download",
+        `${import.meta.env.VITE_APIHUB_URL}/report/list/download`,
+        // "http://localhost:8000/report/list/download",
         {
           selectedMachineNo,
           selectedpaymentType,

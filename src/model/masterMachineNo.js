@@ -1,26 +1,35 @@
 import { Sequelize, DataTypes } from "sequelize";
 import sequelize from "../config/db";
 
-const MasterNumbers = sequelize.define("MasterNumbers", {
+const Machines = sequelize.define("Machines", {
   id: {
     type: DataTypes.INTEGER,
     allowNull: false,
     autoIncrement: true,
   },
   machineNo: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.DECIMAL,
     allowNull: false,
   },
   machineName: {
     type: DataTypes.TEXT,
     allowNull: false,
   },
+  remark: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  isActive: {
+    type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+  },
   createdAt: {
     type: DataTypes.DATE,
     allowNull: true,
     defaultValue: Sequelize.fn("now"),
   },
-  created_by: {
+  createdBy: {
     type: DataTypes.TEXT,
     allowNull: true,
   },
@@ -29,10 +38,10 @@ const MasterNumbers = sequelize.define("MasterNumbers", {
     allowNull: true,
     defaultValue: Sequelize.fn("now"),
   },
-  modified_by: {
+  updatedBy: {
     type: DataTypes.TEXT,
     allowNull: true,
-  },
+  }
 });
 
-export default MasterNumber;
+export default Machines;

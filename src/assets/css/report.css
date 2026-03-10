@@ -1,20 +1,23 @@
 .box-all-box-report {
   margin: 2em !important;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 4em);
 }
 
 .header-report {
   margin-top: 0.2em;
-  padding-top: 1em;
-  padding-bottom: 1.4em;
-  height: 9vh;
+  padding-top: 0.4em;
+  padding-bottom: 0.4em;
+  height: 58px;
+  flex-shrink: 0;
   width: 100%;
   background-color: white;
   display: flex !important;
   justify-content: flex-start !important;
   align-items: center;
   align-content: center;
-  /* margin-left: 5px; */
 }
 
 .box-filter-header-report {
@@ -24,11 +27,14 @@
   width: 100%;
   align-items: center;
   align-content: center;
+  /* background-color: aqua; */
 }
 
 .header-report2 {
-  padding-bottom: 1em;
-  height: 6vh;
+  padding-top: 0.3em;
+  padding-bottom: 0.3em;
+  height: 58px;
+  flex-shrink: 0;
   width: 100%;
   background-color: white;
   display: flex !important;
@@ -43,19 +49,21 @@
   width: 100%;
   align-items: center;
   align-content: center;
-  /* background-color: red; */
+  /* background-color: bisque; */
 }
 
 .box-body-report {
-  height: 72vh;
+  flex: 1;
   width: 100%;
   background-color: bisque;
+  overflow: hidden;
 }
 
 .footer-report {
   background-color: white;
   width: 100%;
-  height: 6vh;
+  height: 44px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -72,39 +80,61 @@
   height: 100%;
 }
 
-.formcon-search-report{
+.formcon-search-report {
   background-color: white;
-  max-width: 12vw !important;
-  min-width: 12vw !important;
-  margin-right: 0.3em !important;
-  margin-left: 0.3em !important;
+  max-width: 170px !important;
+  min-width: 170px !important;
+  margin-right: 0.5vw !important;
+  margin-left: 0.4vw !important;
   justify-content: flex-start !important;
   display: flex !important;
   text-align: center !important;
 }
+.formcon-search-report .MuiOutlinedInput-root {
+  height: 40px !important;
+}
 .formcon-search-report .MuiOutlinedInput-input {
-  height: 1.6em !important;
+  height: 40px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  box-sizing: border-box !important;
 }
 
-.formcon-payment-report,
-.formcon-reprint-report {
+.formcon-search-report1 {
   background-color: white;
-  max-width: 12vw !important;
-  min-width: 12vw !important;
-  margin-right: 0.3em !important;
-  margin-left: 0.3em !important;
+  width: 162px !important;
+  margin-right: 0.5vw !important;
+  margin-left: 0.5vw !important;
+  justify-content: flex-start !important;
+  display: flex;
+}
+/* .formcon-search-report1 .MuiOutlinedInput-root {
+  height: 40px !important;
+}
+.formcon-search-report1 .MuiOutlinedInput-input {
+  height: 40px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  box-sizing: border-box !important;
+} */
+
+.formcon-payment-report {
+  background-color: white;
+  max-width: 170px !important;
+  min-width: 170px !important;
+  /* margin-right: 0.1vw !important; */
+  margin-left: 0.5vw !important;
   justify-content: flex-start !important;
   display: flex;
 }
 .formcon-payment-report-in {
-  max-width: 12vw !important;
-  /* background-color: tomato; */
+  max-width: 170px !important;
   display: flex;
   overflow-x: auto;
   overflow-y: hidden;
 }
 .formcon-payment-report-in .MuiSelect-select {
-  min-width: 9vw !important;
+  min-width: 8.2em !important;
   display: flex !important;
   align-items: center;
   flex-wrap: nowrap !important;
@@ -121,23 +151,33 @@
   font-size: 0.72rem;
 }
 
+.formcon-reprint-report {
+  background-color: white;
+  max-width: 170px !important;
+  min-width: 170px !important;
+  margin-right: 0.5vw !important;
+  margin-left: 0.5vw !important;
+  justify-content: flex-start !important;
+  display: flex;
+}
+
 .formcon-coupon-report {
   background-color: white;
-  min-width: 12vw !important;
-  margin-right: 0.3em !important;
+  max-width: 170px !important;
+  min-width: 170px !important;
+  margin-right: 0.1vw !important;
   margin-left: 1.6em !important;
   justify-content: flex-start !important;
   display: flex;
 }
 .formcon-coupon-report-in {
-  max-width: 12vw !important;
-  /* background-color: tomato; */
+  max-width: 170px !important;
   display: flex;
   overflow-x: auto;
   overflow-y: hidden;
 }
 .formcon-coupon-report-in .MuiSelect-select {
-  min-width: 9vw !important;
+  min-width: 8.14em !important;
   display: flex !important;
   align-items: center;
   flex-wrap: nowrap !important;
@@ -156,12 +196,12 @@
 
 .formcon-machine-report {
   background-color: white;
-  max-width: 12vw !important;
-  min-width: 12vw !important;
-  z-index: 3;
-  margin-right: 0.3em !important;
-  margin-left: 0.3em !important;
-  /* height: 5vh !important; */
+  max-width: 170px !important;
+  min-width: 170px !important;
+  margin-right: 0.5vw !important;
+  margin-left: 0.5vw !important;
+  justify-content: flex-start !important;
+  display: flex;
 }
 .formcon-machine-report-in .MuiInputBase-root {
   display: flex;
@@ -170,8 +210,8 @@
   overflow-y: hidden;
   align-items: center;
   white-space: nowrap;
-  min-width: 12vw !important;
-  height: 43px !important;
+  min-width: 10.65em !important;
+  height: 40px !important;
 }
 .formcon-machine-report-in .MuiInputBase-input::placeholder {
   color: #20211a;
@@ -179,7 +219,7 @@
   /* text-align: center;    */
 }
 .formcon-machine-report-in {
-  max-width: 12vw !important;
+  max-width: 170px !important;
   /* background-color: tomato; */
   display: flex;
   overflow-x: auto;
@@ -195,13 +235,16 @@
 
 .formcon-start-report {
   background-color: white;
-  width: 12vw;
-  margin-right: 0.3em !important;
+  /* max-width: 14vw !important; */
+  width: 10em !important;
+  margin-right: 0.66vw !important;
   margin-left: 1.6em !important;
+  justify-content: flex-start !important;
+  display: flex;
 }
 
 .selected-report {
-  height: 3em !important;
+  height: 40px !important;
   font-size: 0.88em !important;
   display: flex;
   align-items: center;
@@ -211,22 +254,24 @@
 
 .buttom-report {
   margin-left: 1.2em !important;
-  width: 6.4vw !important;
-  height: 2.8em !important;
+  width: clamp(72px, 6.4vw, 100px) !important;
+  height: 40px !important;
   background-color: #2563eb !important;
   color: white !important;
   font-family: inter !important;
   text-transform: capitalize !important;
+  flex-shrink: 0;
 }
 
 .buttom-report-clear {
   margin-left: 0.5em !important;
-  width: 6.4vw !important;
-  height: 2.8em !important;
+  width: clamp(80px, 7vw, 110px) !important;
+  height: 40px !important;
   background-color: #2563eb !important;
   color: white !important;
   font-family: inter !important;
   text-transform: capitalize !important;
+  flex-shrink: 0;
 }
 
 .button-download-report {
@@ -284,8 +329,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  /* min-height: 6vh !important; */
-  height: 42px;
+  height: 40px;
   min-height: 40px;
 }
 
@@ -304,13 +348,24 @@
 }
 
 .date-text {
-  font-size: 0.88em !important;
+  font-size: 0.88rem !important;
   align-items: center !important;
   align-content: center !important;
   justify-content: flex-start !important;
   white-space: nowrap !important;
   line-height: 1 !important;
   margin-left: 1em !important;
+}
+
+.date-text1 {
+  font-size: 0.88rem !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  white-space: nowrap;
+  line-height: 1;
+  text-align: center;
 }
 
 .carenda-report {
@@ -328,15 +383,26 @@
   line-height: 1;
 }
 
-@media screen and (orientation: portrait) {
-  .date-input {
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    cursor: pointer;
-    background: #fff;
-    align-items: center !important;
-    align-content: center !important;
-    min-height: 2vh !important;
+@media screen and (max-height: 700px) {
+  .box-all-box-report {
+    height: calc(100vh - 2em);
+    margin: 1em !important;
+  }
+
+  .header-report {
+    height: 54px;
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
+  }
+
+  .header-report2 {
+    height: 50px;
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
+  }
+
+  .footer-report {
+    height: 40px;
   }
 }
 
@@ -344,7 +410,7 @@
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
-  height: 72vh;
+  height: 100%;
   width: 100%;
 }
 

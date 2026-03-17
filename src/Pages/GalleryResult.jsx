@@ -227,6 +227,8 @@ export default function MachineResultsPage() {
 
   const totalPages = Math.max(1, Math.ceil(totalRecords / Math.max(1, limit)));
 
+  console.log(records)
+
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
       <Stack direction="row" alignItems="center" gap={1} mb={2}>
@@ -350,8 +352,8 @@ export default function MachineResultsPage() {
                   const createdAt = r?.createdAt
                     ? new Date(r.createdAt).toLocaleString()
                     : "-";
-                  const url = `${import.meta.env.VITE_PHOTOSHARE}/media/${r.shortUUID || ""}`;
-
+                  const url = ["21", "22", "23"].includes(mNo) ? `https://photoshare-laos01.sixsheet.me/media/${r.shortUUID}` : `${import.meta.env.VITE_PHOTOSHARE}/media/${r.shortUUID}`
+                  console.log(mNo, url)
                   return (
                     <Grid item xs={12} sm={6} md={4} lg={3} key={r.uuid}>
                       <Card

@@ -36,7 +36,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/gallery/result",
+    path: "/gallery/result/:machineNo",
     element: (
       <ProtectedRoute>
         <GalleryResult />

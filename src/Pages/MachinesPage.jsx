@@ -27,7 +27,18 @@ import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import MonitorIcon from "@mui/icons-material/Monitor";
 import { useNavigate } from "react-router-dom";
 import { api } from "../controller/client";
-import { theme3 } from "../assets/theme";
+import { createTheme } from "@mui/material/styles";
+
+const darkTheme = createTheme({
+  palette: {
+    mode: "dark",
+    background: { default: "#0f0f11", paper: "#1a1a1f" },
+    primary: { main: "#7c6af7" },
+  },
+  typography: {
+    fontFamily: ["Baloo Bhai", "Roboto", "Helvetica Neue", "Arial", "sans-serif"].join(","),
+  },
+});
 
 export default function MachinesPage() {
   const navigate = useNavigate();
@@ -104,7 +115,7 @@ export default function MachinesPage() {
   };
 
   return (
-    <ThemeProvider theme={theme3}>
+    <ThemeProvider theme={darkTheme}>
       <CssBaseline enableColorScheme />
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {/* Header */}
@@ -176,6 +187,8 @@ export default function MachinesPage() {
                       height: "100%",
                       display: "flex",
                       flexDirection: "column",
+                      bgcolor: "background.paper",
+                      borderColor: "#2a2a30",
                       "&:hover": { borderColor: "primary.main" },
                     }}
                   >

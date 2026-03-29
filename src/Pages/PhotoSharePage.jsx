@@ -60,35 +60,6 @@ function PhotoSharePage() {
     return <PhotoIcon sx={{ fontSize: 18, mr: 0.5 }} />;
   };
 
-  // Extract first frame from a video URL as a data URL
-  function generateVideoThumbnail(url) {
-    return new Promise((resolve) => {
-      const video = document.createElement("video");
-      video.crossOrigin = "anonymous";
-      video.muted = true;
-      video.preload = "auto";
-
-      video.onloadeddata = () => {
-        video.currentTime = 0.1; // seek to 0.1s to avoid blank first frame
-      };
-
-      video.onseeked = () => {
-        try {
-          const canvas = document.createElement("canvas");
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          canvas.getContext("2d").drawImage(video, 0, 0);
-          resolve(canvas.toDataURL("image/jpeg", 0.8));
-        } catch {
-          resolve("");
-        }
-      };
-
-      video.onerror = () => resolve("");
-      video.src = url;
-    });
-  }
-
   // Convert URL to File object for native share API
   async function convertUrlToFile(url, name) {
     try {
@@ -116,31 +87,41 @@ function PhotoSharePage() {
         );
         const source = result.data.data.source || [];
 
-        // Build items immediately with paths only (no file downloads yet)
-        const items = source.map((item) => {
+        // Build a thumbnail lookup: video_Result_thumb.jpg, slideshow_thumb.jpg
+        const thumbMap = {};
+        for (const s of source) {
+          if (s.name.endsWith("_thumb.jpg")) {
+            // Map "video_Result_thumb.jpg" → "video_Result.mp4"
+            const videoName = s.name.replace("_thumb.jpg", ".mp4");
+            thumbMap[videoName] = s.path;
+          }
+        }
+
+        // Filter out thumbnail files from display items
+        const displaySource = source.filter((s) => !s.name.endsWith("_thumb.jpg"));
+
+        // Fallback thumbnail for videos without _thumb.jpg (use the photo)
+        const imageItem = displaySource.find((s) => s.name.endsWith(".png") || s.name.endsWith(".jpg"));
+        const fallbackThumb = imageItem?.path || "";
+
+        const items = displaySource.map((item) => {
           const type = getMediaType(item.name);
+          let thumbnail = item.path;
+          if (type === "video") {
+            thumbnail = thumbMap[item.name] || fallbackThumb || item.path;
+          }
           return {
             name: item.name,
             path: item.path,
             type,
             label: getLabel(item.name),
-            thumbnail: item.path, // use path directly; videos get thumbnail later
+            thumbnail,
             file: null, // downloaded lazily on demand
           };
         });
 
         setMediaItems(items);
         setLoading(false);
-
-        // Generate video thumbnails in background (non-blocking)
-        items.forEach(async (item, idx) => {
-          if (item.type === "video") {
-            const thumb = await generateVideoThumbnail(item.path);
-            if (thumb) {
-              setMediaItems((prev) => prev.map((m, i) => i === idx ? { ...m, thumbnail: thumb } : m));
-            }
-          }
-        });
       } catch (error) {
         console.error("Failed to load media:", error);
         setLoading(false);

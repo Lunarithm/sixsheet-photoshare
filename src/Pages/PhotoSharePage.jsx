@@ -116,27 +116,31 @@ function PhotoSharePage() {
         );
         const source = result.data.data.source || [];
 
-        // Build media items with files for sharing + generate thumbnails
-        const items = await Promise.all(
-          source.map(async (item) => {
-            const type = getMediaType(item.name);
-            const [file, thumbnail] = await Promise.all([
-              convertUrlToFile(item.path, item.name),
-              type === "video" ? generateVideoThumbnail(item.path) : Promise.resolve(item.path),
-            ]);
-            return {
-              name: item.name,
-              path: item.path,
-              type,
-              label: getLabel(item.name),
-              thumbnail: thumbnail || item.path,
-              file,
-            };
-          })
-        );
+        // Build items immediately with paths only (no file downloads yet)
+        const items = source.map((item) => {
+          const type = getMediaType(item.name);
+          return {
+            name: item.name,
+            path: item.path,
+            type,
+            label: getLabel(item.name),
+            thumbnail: item.path, // use path directly; videos get thumbnail later
+            file: null, // downloaded lazily on demand
+          };
+        });
 
         setMediaItems(items);
         setLoading(false);
+
+        // Generate video thumbnails in background (non-blocking)
+        items.forEach(async (item, idx) => {
+          if (item.type === "video") {
+            const thumb = await generateVideoThumbnail(item.path);
+            if (thumb) {
+              setMediaItems((prev) => prev.map((m, i) => i === idx ? { ...m, thumbnail: thumb } : m));
+            }
+          }
+        });
       } catch (error) {
         console.error("Failed to load media:", error);
         setLoading(false);
@@ -152,15 +156,26 @@ function PhotoSharePage() {
     setShowPopup(false);
   };
 
-  const handleDownload = () => {
-    if (!selectedMedia?.file) return;
-    saveAs(selectedMedia.file, `${selectedMedia.name}`);
+  // Download file on demand (lazy — not pre-downloaded)
+  const getFile = async (item) => {
+    if (item.file) return item.file;
+    const file = await convertUrlToFile(item.path, item.name);
+    // Cache it for next time
+    setMediaItems((prev) => prev.map((m) => m.name === item.name ? { ...m, file } : m));
+    return file;
+  };
+
+  const handleDownload = async () => {
+    if (!selectedMedia) return;
+    const file = await getFile(selectedMedia);
+    if (file) saveAs(file, selectedMedia.name);
   };
 
   const handleShare = async () => {
-    if (!selectedMedia?.file || !navigator.share) return;
+    if (!selectedMedia || !navigator.share) return;
     try {
-      await navigator.share({ files: [selectedMedia.file] });
+      const file = await getFile(selectedMedia);
+      if (file) await navigator.share({ files: [file] });
     } catch (err) {
       console.error("Share failed:", err);
     }

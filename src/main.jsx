@@ -11,6 +11,7 @@ import GalleryFilter from "./Pages/GalleryFilter.jsx";
 import Report from "./Pages/Report.jsx";
 import SelectPage from "./Pages/pageSelection.jsx";
 import MachinesPage from "./Pages/MachinesPage.jsx";
+import PhotoSharePage from "./Pages/PhotoSharePage.jsx";
 
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
@@ -18,6 +19,10 @@ const router = createBrowserRouter([
   {
     path: "/media/:shortUUID",
     element: <App />,
+  },
+  {
+    path: "/photoshare/:shortUUID",
+    element: <PhotoSharePage />,
   },
   {
     path: "/admin",

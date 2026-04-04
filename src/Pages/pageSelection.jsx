@@ -121,6 +121,14 @@ export default function SelectPage() {
                 <Typography className="text-btn">gallery</Typography>
               </Button>
             </Box>
+            <Box className="box-btn-gallery">
+              <Button
+                className="go-report-btn"
+                onClick={() => navigate("/machines")}
+              >
+                <Typography className="text-btn">machines</Typography>
+              </Button>
+            </Box>
           </Box>
         </Box>
         <Box

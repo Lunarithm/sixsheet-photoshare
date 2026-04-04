@@ -1,5 +1,5 @@
 // src/pages/MachineResultsPage.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import {
   Box,
@@ -20,7 +20,7 @@ import {
   Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -67,50 +67,7 @@ function getImageFromSource(sourceArr) {
 
 export default function MachineResultsPage() {
   const navigate = useNavigate();
-  const location = useLocation();
-
-  // ✅ Initialize from navigation state first; fall back to sessionStorage
-  const [machineNos, setMachineNos] = React.useState(() => {
-    const fromNavNos = location.state?.machineNos;
-    if (Array.isArray(fromNavNos) && fromNavNos.length) {
-      sessionStorage.setItem("machineNos", JSON.stringify(fromNavNos));
-      return fromNavNos;
-    }
-    const cachedNos = sessionStorage.getItem("machineNos");
-    return cachedNos ? JSON.parse(cachedNos) : [];
-  });
-
-  const [machineNames, setMachineNames] = React.useState(() => {
-    const fromNavNames = location.state?.machineNames;
-    if (Array.isArray(fromNavNames) && fromNavNames.length) {
-      sessionStorage.setItem("machineNames", JSON.stringify(fromNavNames));
-      return fromNavNames;
-    }
-    const cachedNames = sessionStorage.getItem("machineNames");
-    return cachedNames ? JSON.parse(cachedNames) : [];
-  });
-
-  // (Optional) when a new navigation happens, refresh from state and prefer machineNames
-  React.useEffect(() => {
-    const fromNavNames = location.state?.machineNames;
-    const fromNavNos = location.state?.machineNos;
-
-    if (Array.isArray(fromNavNames) && fromNavNames.length) {
-      setMachineNames(fromNavNames);
-      sessionStorage.setItem("machineNames", JSON.stringify(fromNavNames));
-
-      // If you want machineName to take precedence and *clear* numbers:
-      setMachineNos([]);
-      sessionStorage.removeItem("machineNos");
-      return;
-    }
-
-    if (Array.isArray(fromNavNos) && fromNavNos.length) {
-      setMachineNos(fromNavNos);
-      sessionStorage.setItem("machineNos", JSON.stringify(fromNavNos));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.key]);
+  const { machineNo } = useParams();
 
   // ---- query params (pagination) ----
   const [searchParams, setSearchParams] = useSearchParams();
@@ -153,13 +110,12 @@ export default function MachineResultsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.toString()]);
 
-  // if no selection, go back to picker
+  // if no machineNo param, go back to home
   useEffect(() => {
-    if (!machineNos.length && !machineNames.length) {
-      navigate("/gallery/filter", { replace: true });
+    if (!machineNo) {
+      navigate("/gallery/home", { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(machineNos)]);
+  }, [machineNo, navigate]);
 
   const offset = useMemo(() => page * limit, [page, limit]);
 
@@ -168,9 +124,7 @@ export default function MachineResultsPage() {
     setError("");
     try {
       const body = {
-        machineName: machineNames.length ? machineNames : undefined,
-        machineNo:
-          !machineNames.length && machineNos.length ? machineNos : undefined,
+        machineNo: [machineNo],
         startDate: toBackendUtc(startInput),
         endDate: toBackendUtc(endInput),
         dateField: "createdAt",
@@ -238,7 +192,7 @@ export default function MachineResultsPage() {
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, limit, startInput, endInput, JSON.stringify(machineNos)]);
+  }, [page, limit, startInput, endInput, machineNo]);
 
   const totalPages = Math.max(1, Math.ceil(totalRecords / Math.max(1, limit)));
 
@@ -253,16 +207,7 @@ export default function MachineResultsPage() {
         <Typography variant="h5" sx={{ flexGrow: 1 }}>
           Machine Results
         </Typography>
-        <Stack direction="row" gap={1} flexWrap="wrap">
-          {machineNames.length
-            ? machineNames.map((n) => <Chip key={n} label={`Name: ${n}`} />)
-            : machineNos.map((m) => <Chip key={m} label={`#${m}`} />)}
-        </Stack>
-        <Stack direction="row" gap={1} flexWrap="wrap">
-          {machineNos.map((m) => (
-            <Chip key={m} label={`#${m}`} />
-          ))}
-        </Stack>
+        <Chip label={`#${machineNo}`} />
       </Stack>
 
       {/* Filters */}

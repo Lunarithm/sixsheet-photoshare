@@ -114,8 +114,14 @@ export default function MachineResultsPage() {
 
   // ---- query params (pagination) ----
   const [searchParams, setSearchParams] = useSearchParams();
-  const pageFromQuery = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-  const limitFromQuery = Math.max(1, parseInt(searchParams.get("limit") || "10", 10));
+  const pageFromQuery = Math.max(
+    1,
+    parseInt(searchParams.get("page") || "1", 10),
+  );
+  const limitFromQuery = Math.max(
+    1,
+    parseInt(searchParams.get("limit") || "10", 10),
+  );
 
   // ---- local state ----
   const [startInput, setStartInput] = useState(""); // datetime-local
@@ -126,15 +132,16 @@ export default function MachineResultsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [counts, setCounts] = useState([]);     // [{ machineNo, count }]
-  const [records, setRecords] = useState([]);   // [{ uuid, source[], event, createdAt, ... }]
+  const [counts, setCounts] = useState([]); // [{ machineNo, count }]
+  const [records, setRecords] = useState([]); // [{ uuid, source[], event, createdAt, ... }]
   const [totalRecords, setTotalRecords] = useState(0);
 
   const token =
-    localStorage.getItem("access_token") || sessionStorage.getItem("access_token");
+    localStorage.getItem("access_token") ||
+    sessionStorage.getItem("access_token");
 
   if (!token) {
-    navigate("/login")
+    navigate("/login");
   }
 
   // Sync local page/limit when URL query changes (e.g., user pastes a URL)
@@ -162,7 +169,8 @@ export default function MachineResultsPage() {
     try {
       const body = {
         machineName: machineNames.length ? machineNames : undefined,
-        machineNo: !machineNames.length && machineNos.length ? machineNos : undefined,
+        machineNo:
+          !machineNames.length && machineNos.length ? machineNos : undefined,
         startDate: toBackendUtc(startInput),
         endDate: toBackendUtc(endInput),
         dateField: "createdAt",
@@ -170,12 +178,16 @@ export default function MachineResultsPage() {
         limit,
       };
 
-      const { data } = await axios.post(`${import.meta.env.VITE_APIHUB_URL}/media/fetch/machine`, body, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : undefined,
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_APIHUB_URL}/media/fetch/machine`,
+        body,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token ? `Bearer ${token}` : undefined,
+          },
         },
-      });
+      );
 
       setCounts(Array.isArray(data?.counts) ? data.counts : []);
       setRecords(Array.isArray(data?.records) ? data.records : []);
@@ -191,7 +203,7 @@ export default function MachineResultsPage() {
   const resetToFirstPageAndFetch = () => {
     setPage(0);
     const next = new URLSearchParams(searchParams);
-    next.set("page", "1");              // store 1-based in URL
+    next.set("page", "1"); // store 1-based in URL
     next.set("limit", String(limit));
     setSearchParams(next, { replace: false });
     fetchData();
@@ -199,7 +211,10 @@ export default function MachineResultsPage() {
 
   // Change page helper (keeps URL in sync)
   const goToPage = (nextZeroBased) => {
-    const totalPages = Math.max(1, Math.ceil(totalRecords / Math.max(1, limit)));
+    const totalPages = Math.max(
+      1,
+      Math.ceil(totalRecords / Math.max(1, limit)),
+    );
     const clamped = Math.min(Math.max(0, nextZeroBased), totalPages - 1);
     setPage(clamped);
     const next = new URLSearchParams(searchParams);
@@ -227,7 +242,7 @@ export default function MachineResultsPage() {
 
   const totalPages = Math.max(1, Math.ceil(totalRecords / Math.max(1, limit)));
 
-  console.log(records)
+  console.log(records);
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
@@ -260,9 +275,14 @@ export default function MachineResultsPage() {
                   label="Start Date"
                   ampm={false} // 24-hour
                   value={startInput ? dayjs(startInput) : null}
-                  onChange={(val) => setStartInput(val ? val.format("YYYY-MM-DDTHH:mm") : "")}
+                  onChange={(val) =>
+                    setStartInput(val ? val.format("YYYY-MM-DDTHH:mm") : "")
+                  }
                   slotProps={{
-                    textField: { fullWidth: true, InputLabelProps: { shrink: true } },
+                    textField: {
+                      fullWidth: true,
+                      InputLabelProps: { shrink: true },
+                    },
                   }}
                 />
               </Grid>
@@ -272,15 +292,25 @@ export default function MachineResultsPage() {
                   label="End Date"
                   ampm={false} // 24-hour
                   value={endInput ? dayjs(endInput) : null}
-                  onChange={(val) => setEndInput(val ? val.format("YYYY-MM-DDTHH:mm") : "")}
+                  onChange={(val) =>
+                    setEndInput(val ? val.format("YYYY-MM-DDTHH:mm") : "")
+                  }
                   slotProps={{
-                    textField: { fullWidth: true, InputLabelProps: { shrink: true } },
+                    textField: {
+                      fullWidth: true,
+                      InputLabelProps: { shrink: true },
+                    },
                   }}
                 />
               </Grid>
 
               <Grid item xs={12} md={4}>
-                <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+                <Stack
+                  direction="row"
+                  gap={1}
+                  alignItems="center"
+                  flexWrap="wrap"
+                >
                   <Button
                     variant="contained"
                     onClick={resetToFirstPageAndFetch}
@@ -291,7 +321,11 @@ export default function MachineResultsPage() {
                   <Typography variant="body2" color="text.secondary">
                     Rows:
                   </Typography>
-                  <Select size="small" value={limit} onChange={handleChangeRowsPerPage}>
+                  <Select
+                    size="small"
+                    value={limit}
+                    onChange={handleChangeRowsPerPage}
+                  >
                     {[10, 20, 50, 100].map((n) => (
                       <MenuItem key={n} value={n}>
                         {n}
@@ -321,7 +355,9 @@ export default function MachineResultsPage() {
               ))}
             </Stack>
           ) : (
-            <Typography color="text.secondary">No summary available.</Typography>
+            <Typography color="text.secondary">
+              No summary available.
+            </Typography>
           )}
         </CardContent>
       </Card>
@@ -352,8 +388,10 @@ export default function MachineResultsPage() {
                   const createdAt = r?.createdAt
                     ? new Date(r.createdAt).toLocaleString()
                     : "-";
-                  const url = ["21", "22", "23"].includes(mNo) ? `https://photoshare-laos01.sixsheet.me/media/${r.shortUUID}` : `${import.meta.env.VITE_PHOTOSHARE}/media/${r.shortUUID}`
-                  console.log(mNo, url)
+                  const url = ["21", "22", "23"].includes(mNo)
+                    ? `https://photoshare-laos01.sixsheet.me/media/${r.shortUUID}`
+                    : `${import.meta.env.VITE_PHOTOSHARE}/media/${r.shortUUID}`;
+                  console.log(mNo, url);
                   return (
                     <Grid item xs={12} sm={6} md={4} lg={3} key={r.uuid}>
                       <Card
@@ -400,7 +438,10 @@ export default function MachineResultsPage() {
                               <Typography variant="subtitle1" noWrap>
                                 #{mNo} {mName ? `• ${mName}` : ""}
                               </Typography>
-                              <Typography variant="body2" color="text.secondary">
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
                                 {createdAt}
                               </Typography>
                             </Stack>

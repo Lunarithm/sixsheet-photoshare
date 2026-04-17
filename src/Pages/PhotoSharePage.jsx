@@ -63,16 +63,17 @@ function PhotoSharePage() {
   // Convert URL to File object for native share API
   async function convertUrlToFile(url, name) {
     try {
-      const response = await axios.get(url, {
-        responseType: "blob",
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      });
-      const ext = name.split(".").pop();
-      const mimeType = ext === "mp4" ? "video/mp4" : ext === "webm" ? "video/webm" : "image/jpeg";
+      const response = await axios.get(url, { responseType: "blob" });
+      const ext = name.split(".").pop().toLowerCase();
+      const mimeMap = {
+        mp4: "video/mp4",
+        webm: "video/webm",
+        mov: "video/quicktime",
+        png: "image/png",
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+      };
+      const mimeType = mimeMap[ext] || "application/octet-stream";
       return new File([response.data], `${name}`, { type: mimeType });
     } catch {
       return null;
@@ -80,43 +81,70 @@ function PhotoSharePage() {
   }
 
   useEffect(() => {
+    const MAX_ATTEMPTS = 3;
+    const RETRY_DELAYS_MS = [500, 1500]; // delays before attempt 2 and 3
+
+    const fetchWithRetry = async () => {
+      let lastError = null;
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        try {
+          const result = await axios.get(
+            `${import.meta.env.VITE_APIHUB_URL}/media/${shortUUID}`,
+            { timeout: 15000 }
+          );
+          const source = Array.isArray(result?.data?.data?.source)
+            ? result.data.data.source
+            : Array.isArray(result?.data?.source)
+            ? result.data.source
+            : null;
+          if (source && source.length > 0) return source;
+          lastError = new Error("Empty or malformed response");
+        } catch (err) {
+          lastError = err;
+        }
+        if (attempt < MAX_ATTEMPTS) {
+          await new Promise((r) => setTimeout(r, RETRY_DELAYS_MS[attempt - 1]));
+        }
+      }
+      throw lastError;
+    };
+
     const fetchData = async () => {
       try {
-        const result = await axios.get(
-          `${import.meta.env.VITE_APIHUB_URL}/media/${shortUUID}`
-        );
-        const source = result.data.data.source || [];
+        const source = await fetchWithRetry();
 
-        // Build a thumbnail lookup: video_Result_thumb.jpg, slideshow_thumb.jpg
+        // Build thumbnail lookup keyed by base name (extension-agnostic)
         const thumbMap = {};
         for (const s of source) {
           if (s.name.endsWith("_thumb.jpg")) {
-            // Map "video_Result_thumb.jpg" → "video_Result.mp4"
-            const videoName = s.name.replace("_thumb.jpg", ".mp4");
-            thumbMap[videoName] = s.path;
+            const baseName = s.name.replace("_thumb.jpg", "");
+            thumbMap[baseName] = s.path;
           }
         }
 
-        // Filter out thumbnail files from display items
+        // Display items exclude thumbnail files
         const displaySource = source.filter((s) => !s.name.endsWith("_thumb.jpg"));
 
-        // Fallback thumbnail for videos without _thumb.jpg (use the photo)
-        const imageItem = displaySource.find((s) => s.name.endsWith(".png") || s.name.endsWith(".jpg"));
-        const fallbackThumb = imageItem?.path || "";
+        // Image-only fallback — never a video URL (Safari won't render it as <img>)
+        const imageItem = displaySource.find((s) =>
+          /\.(jpe?g|png|webp)$/i.test(s.name)
+        );
+        const imageOnlyFallback = imageItem?.path || "";
 
         const items = displaySource.map((item) => {
           const type = getMediaType(item.name);
-          let thumbnail = item.path;
-          if (type === "video") {
-            thumbnail = thumbMap[item.name] || fallbackThumb || item.path;
-          }
+          const baseName = item.name.replace(/\.[^.]+$/, "");
+          const thumbnail =
+            type === "video"
+              ? thumbMap[baseName] || imageOnlyFallback
+              : item.path;
           return {
             name: item.name,
             path: item.path,
             type,
             label: getLabel(item.name),
             thumbnail,
-            file: null, // downloaded lazily on demand
+            file: null,
           };
         });
 
@@ -198,8 +226,23 @@ function PhotoSharePage() {
                     border: "12px solid #F4F0D3",
                   }}
                 >
-                  {/* Thumbnail — use photo image for all items */}
-                  <img src={item.thumbnail || item.path} alt={item.label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  {/* Thumbnail — image-only, with retry on transient Safari fetch failures */}
+                  <img
+                    src={item.thumbnail}
+                    alt={item.label}
+                    loading="lazy"
+                    decoding="async"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    onError={(e) => {
+                      const el = e.currentTarget;
+                      const attempt = Number(el.dataset.retry || 0);
+                      if (attempt < 1 && item.thumbnail) {
+                        el.dataset.retry = String(attempt + 1);
+                        const sep = item.thumbnail.includes("?") ? "&" : "?";
+                        el.src = `${item.thumbnail}${sep}r=${Date.now()}`;
+                      }
+                    }}
+                  />
 
                   {/* Click overlay */}
                   <Box
@@ -284,7 +327,20 @@ function PhotoSharePage() {
                     {selectedMedia?.type === "video" ? (
                       <ReactPlayer
                         url={selectedMedia.path}
-                        controls loop playing
+                        controls
+                        loop
+                        playing
+                        muted
+                        playsinline
+                        config={{
+                          file: {
+                            attributes: {
+                              playsInline: true,
+                              "webkit-playsinline": "true",
+                              preload: "metadata",
+                            },
+                          },
+                        }}
                         style={{ maxHeight: "80vh", maxWidth: "72%", position: "relative", zIndex: 99, marginBottom: "20px" }}
                         onClick={(e) => e.stopPropagation()}
                       />
@@ -292,6 +348,7 @@ function PhotoSharePage() {
                       <img
                         src={selectedMedia.path}
                         alt="Selected"
+                        decoding="async"
                         style={{ maxHeight: "80vh", maxWidth: "68%" }}
                         onClick={(e) => e.stopPropagation()}
                       />

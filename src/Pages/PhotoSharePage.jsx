@@ -81,16 +81,37 @@ function PhotoSharePage() {
   }
 
   useEffect(() => {
+    const MAX_ATTEMPTS = 3;
+    const RETRY_DELAYS_MS = [500, 1500]; // delays before attempt 2 and 3
+
+    const fetchWithRetry = async () => {
+      let lastError = null;
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        try {
+          const result = await axios.get(
+            `${import.meta.env.VITE_APIHUB_URL}/media/${shortUUID}`,
+            { timeout: 15000 }
+          );
+          const source = Array.isArray(result?.data?.data?.source)
+            ? result.data.data.source
+            : Array.isArray(result?.data?.source)
+            ? result.data.source
+            : null;
+          if (source && source.length > 0) return source;
+          lastError = new Error("Empty or malformed response");
+        } catch (err) {
+          lastError = err;
+        }
+        if (attempt < MAX_ATTEMPTS) {
+          await new Promise((r) => setTimeout(r, RETRY_DELAYS_MS[attempt - 1]));
+        }
+      }
+      throw lastError;
+    };
+
     const fetchData = async () => {
       try {
-        const result = await axios.get(
-          `${import.meta.env.VITE_APIHUB_URL}/media/${shortUUID}`
-        );
-        const source = Array.isArray(result?.data?.data?.source)
-          ? result.data.data.source
-          : Array.isArray(result?.data?.source)
-          ? result.data.source
-          : [];
+        const source = await fetchWithRetry();
 
         // Build thumbnail lookup keyed by base name (extension-agnostic)
         const thumbMap = {};

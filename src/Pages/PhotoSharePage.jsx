@@ -37,6 +37,7 @@ function PhotoSharePage() {
   const { shortUUID } = useParams();
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [mediaItems, setMediaItems] = useState([]); // [{ name, path, type, file }]
   const [selectedMedia, setSelectedMedia] = useState(null); // current item in modal
   const [showPopup, setShowPopup] = useState(false);
@@ -110,6 +111,7 @@ function PhotoSharePage() {
     };
 
     const fetchData = async () => {
+      setLoadError(false);
       try {
         const source = await fetchWithRetry();
 
@@ -152,6 +154,7 @@ function PhotoSharePage() {
         setLoading(false);
       } catch (error) {
         console.error("Failed to load media:", error);
+        setLoadError(true);
         setLoading(false);
       }
     };
@@ -213,6 +216,40 @@ function PhotoSharePage() {
         <Grid container justifyContent="center" alignItems="center" direction="column" sx={{ width: "100%" }}>
           {loading ? (
             <ClipLoader color="#123abc" loading={loading} size={100} className="all-element-center" />
+          ) : loadError || mediaItems.length === 0 ? (
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                py: "8vh",
+                px: "4vw",
+                textAlign: "center",
+              }}
+            >
+              <Typography
+                color="#F4F0D3"
+                fontFamily="Boyrun"
+                fontSize="1.6em"
+                fontWeight={600}
+                sx={{ mb: "8px" }}
+              >
+                Media not found
+              </Typography>
+              <Typography color="#F4F0D3" fontFamily="Boyrun" fontSize="1em" sx={{ opacity: 0.8, mb: "20px" }}>
+                This share link may have expired or is no longer available.
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => window.location.reload()}
+                sx={{ borderRadius: "50px", px: 4 }}
+              >
+                <Typography color="black" fontSize="1rem" fontWeight={600} textTransform="none">
+                  Try Again
+                </Typography>
+              </Button>
+            </Box>
           ) : (
             <Grid item size={{ xs: 12, md: 12 }} container spacing={2} className="all-element-center">
               {mediaItems.map((item, idx) => (

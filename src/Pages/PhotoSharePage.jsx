@@ -21,6 +21,7 @@ import share from "../assets/sh.png";
 import ReactPlayer from "react-player";
 import axios from "axios";
 import ClipLoader from "react-spinners/ClipLoader";
+import { fetchMediaWithRetry, unregisterStaleServiceWorkers } from "../lib/fetchMedia";
 import { saveAs } from "file-saver";
 import QRCode from "react-qr-code";
 import src from "../assets/cap.png";
@@ -38,6 +39,7 @@ function PhotoSharePage() {
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [errorDetail, setErrorDetail] = useState("");
   const [mediaItems, setMediaItems] = useState([]); // [{ name, path, type, file }]
   const [selectedMedia, setSelectedMedia] = useState(null); // current item in modal
   const [showPopup, setShowPopup] = useState(false);
@@ -82,38 +84,15 @@ function PhotoSharePage() {
   }
 
   useEffect(() => {
-    const MAX_ATTEMPTS = 3;
-    const RETRY_DELAYS_MS = [500, 1500]; // delays before attempt 2 and 3
-
-    const fetchWithRetry = async () => {
-      let lastError = null;
-      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-        try {
-          const result = await axios.get(
-            `${import.meta.env.VITE_APIHUB_URL}/media/${shortUUID}`,
-            { timeout: 15000 }
-          );
-          const source = Array.isArray(result?.data?.data?.source)
-            ? result.data.data.source
-            : Array.isArray(result?.data?.source)
-            ? result.data.source
-            : null;
-          if (source && source.length > 0) return source;
-          lastError = new Error("Empty or malformed response");
-        } catch (err) {
-          lastError = err;
-        }
-        if (attempt < MAX_ATTEMPTS) {
-          await new Promise((r) => setTimeout(r, RETRY_DELAYS_MS[attempt - 1]));
-        }
-      }
-      throw lastError;
-    };
-
     const fetchData = async () => {
       setLoadError(false);
+      setErrorDetail("");
+      await unregisterStaleServiceWorkers();
       try {
-        const source = await fetchWithRetry();
+        const { source } = await fetchMediaWithRetry(
+          import.meta.env.VITE_APIHUB_URL,
+          shortUUID
+        );
 
         // Build thumbnail lookup keyed by base name (extension-agnostic)
         const thumbMap = {};
@@ -153,8 +132,15 @@ function PhotoSharePage() {
         setMediaItems(items);
         setLoading(false);
       } catch (error) {
-        console.error("Failed to load media:", error);
+        console.error("Failed to load media:", error, error?.diagnostics);
         setLoadError(true);
+        // Serialize diagnostics for on-screen debugging
+        const diag = Array.isArray(error?.diagnostics)
+          ? error.diagnostics.map((d) =>
+              `#${d.attempt}/${d.via}: ${d.kind}${d.status ? ` [${d.status}]` : ""}${d.contentType ? ` ${d.contentType}` : ""}${d.message ? ` — ${d.message}` : ""}`
+            ).join("\n")
+          : (error?.message || "Unknown error");
+        setErrorDetail(diag);
         setLoading(false);
       }
     };
@@ -249,6 +235,23 @@ function PhotoSharePage() {
                   Try Again
                 </Typography>
               </Button>
+              {errorDetail && (
+                <Box
+                  component="pre"
+                  sx={{
+                    mt: "20px",
+                    maxWidth: "90vw",
+                    fontSize: "0.7rem",
+                    color: "#F4F0D3",
+                    opacity: 0.6,
+                    textAlign: "left",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {errorDetail}
+                </Box>
+              )}
             </Box>
           ) : (
             <Grid item size={{ xs: 12, md: 12 }} container spacing={2} className="all-element-center">
@@ -263,7 +266,7 @@ function PhotoSharePage() {
                     border: "12px solid #F4F0D3",
                   }}
                 >
-                  {/* Thumbnail — image-only, with retry on transient Safari fetch failures */}
+                  {/* Thumbnail — image-only, with exponential retry on Safari fetch failures */}
                   <img
                     src={item.thumbnail}
                     alt={item.label}
@@ -273,10 +276,13 @@ function PhotoSharePage() {
                     onError={(e) => {
                       const el = e.currentTarget;
                       const attempt = Number(el.dataset.retry || 0);
-                      if (attempt < 1 && item.thumbnail) {
+                      const backoff = [500, 1500, 3500];
+                      if (attempt < backoff.length && item.thumbnail) {
                         el.dataset.retry = String(attempt + 1);
-                        const sep = item.thumbnail.includes("?") ? "&" : "?";
-                        el.src = `${item.thumbnail}${sep}r=${Date.now()}`;
+                        setTimeout(() => {
+                          const sep = item.thumbnail.includes("?") ? "&" : "?";
+                          el.src = `${item.thumbnail}${sep}r=${Date.now()}.${attempt + 1}`;
+                        }, backoff[attempt]);
                       }
                     }}
                   />

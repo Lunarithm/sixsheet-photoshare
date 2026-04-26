@@ -59,10 +59,29 @@ function App() {
     setShowPopup(!showPopup);
   };
 
+  // Derive ext + MIME from the URL itself rather than hardcoding to jpg.
+  // The kiosk now ships lossless PNGs (reverted from the JPEG path because
+  // customers reported visible quality loss on the share page), so any
+  // assumption that "image" == "jpeg" would force the downloaded file to
+  // carry the wrong extension and re-encode through the wrong MIME on share.
+  function inferImageExtAndMime(url) {
+    const cleaned = (url || "").split("?")[0].toLowerCase();
+    if (cleaned.endsWith(".png")) return { ext: "png", mime: "image/png" };
+    if (cleaned.endsWith(".webp")) return { ext: "webp", mime: "image/webp" };
+    return { ext: "jpg", mime: "image/jpeg" };
+  }
+
   async function convertUrlToFile(url, type) {
     if (!url) return null;
-    const dataType = type == "img" ? "jpg" : "mp4";
-    const blobType = type == "img" ? "image/jpeg" : "video/mp4";
+    let dataType, blobType;
+    if (type === "img") {
+      const inferred = inferImageExtAndMime(url);
+      dataType = inferred.ext;
+      blobType = inferred.mime;
+    } else {
+      dataType = "mp4";
+      blobType = "video/mp4";
+    }
     try {
       const response = await axios.get(url, { responseType: "blob" });
       const file = new File([response.data], `media_${shortUUID}.${dataType}`, {
@@ -590,7 +609,11 @@ function App() {
                         }}
                         onClick={() => {
                           if (image) {
-                            saveAs(imgFile, `image_${shortUUID}.jpg`);
+                            // Reuse the extension the kiosk actually shipped
+                            // (png today, jpg if it ever changes again) so
+                            // the downloaded file matches the served bytes.
+                            const ext = inferImageExtAndMime(pathImg).ext;
+                            saveAs(imgFile, `image_${shortUUID}.${ext}`);
                           } else if (vdo) {
                             saveAs(vdoFile, `video_${shortUUID}.mp4`);
                           }

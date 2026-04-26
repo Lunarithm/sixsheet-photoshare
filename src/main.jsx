@@ -18,7 +18,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 const router = createBrowserRouter([
   {
     path: "/media/:shortUUID",
-    element: <App />,
+    element: <PhotoSharePage />,
   },
   {
     path: "/photoshare/:shortUUID",

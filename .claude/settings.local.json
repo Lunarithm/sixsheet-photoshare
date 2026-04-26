@@ -1,7 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "Bash(npx vite *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(gh pr *)",
+      "Bash(git fetch *)"
+    ],
+    "additionalDirectories": [
+      "C:\\Project\\sixsheet.apihub"
     ]
   }
 }

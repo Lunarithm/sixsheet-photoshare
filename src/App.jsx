@@ -111,17 +111,22 @@ function App() {
     );
     const thumbItem = source.find((s) => (s?.name || "").endsWith("_thumb.jpg"));
 
-    const png = imageItem?.path || "";
-    const mp4 = videoItem?.path || "";
+    // Format-agnostic: imageUrl can be PNG / JPG / WebP — whichever the
+    // kiosk uploaded. The display element loads it directly via <img src>
+    // and the browser figures out the format from the bytes + S3
+    // Content-Type. The download path infers ext + MIME from the URL via
+    // inferImageExtAndMime() so the saved file matches the served bytes.
+    const imageUrl = imageItem?.path || "";
+    const videoUrl = videoItem?.path || "";
 
-    setPathImg(png);
-    setPathVdo(mp4);
-    setPathThn(thumbItem?.path || png);
-    setDisplayVideo(Boolean(mp4));
+    setPathImg(imageUrl);
+    setPathVdo(videoUrl);
+    setPathThn(thumbItem?.path || imageUrl);
+    setDisplayVideo(Boolean(videoUrl));
 
     // Pre-fetch blobs for download/share (failures are non-fatal)
-    if (png) await convertUrlToFile(png, "img");
-    if (mp4) await convertUrlToFile(mp4, "vdo");
+    if (imageUrl) await convertUrlToFile(imageUrl, "img");
+    if (videoUrl) await convertUrlToFile(videoUrl, "vdo");
   };
 
   useEffect(() => {

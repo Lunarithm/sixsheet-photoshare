@@ -43,6 +43,17 @@ function PhotoSharePage() {
   const [mediaItems, setMediaItems] = useState([]); // [{ name, path, type, file }]
   const [selectedMedia, setSelectedMedia] = useState(null); // current item in modal
   const [showPopup, setShowPopup] = useState(false);
+  // Auto-retry tracking for the "still uploading" friendly state.
+  // The kiosk now ships uploads in the background after the QR appears, so a
+  // guest who scans within ~5-15s may arrive before the upload completes.
+  // Rather than show "Media not found" immediately, we silently re-poll the
+  // apihub for ~2 minutes, surfacing a gentle "your photos are still being
+  // uploaded" message during that window. After MAX_AUTO_RETRIES we fall
+  // back to the original "link may have expired" copy.
+  const [autoRetryCount, setAutoRetryCount] = useState(0);
+  const [retryCountdown, setRetryCountdown] = useState(0);
+  const MAX_AUTO_RETRIES = 12; // 12 * 10s ≈ 2 minutes total
+  const RETRY_INTERVAL_SEC = 10;
 
   // Determine media type from file name
   const getMediaType = (name) => {
@@ -83,70 +94,97 @@ function PhotoSharePage() {
     }
   }
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoadError(false);
-      setErrorDetail("");
-      await unregisterStaleServiceWorkers();
-      try {
-        const { source } = await fetchMediaWithRetry(
-          import.meta.env.VITE_APIHUB_URL,
-          shortUUID
-        );
+  // Single fetch attempt — extracted so the auto-retry effect below can
+  // re-trigger it without duplicating the body.
+  const fetchData = async () => {
+    setLoadError(false);
+    setErrorDetail("");
+    await unregisterStaleServiceWorkers();
+    try {
+      const { source } = await fetchMediaWithRetry(
+        import.meta.env.VITE_APIHUB_URL,
+        shortUUID
+      );
 
-        // Build thumbnail lookup keyed by base name (extension-agnostic)
-        const thumbMap = {};
-        for (const s of source) {
-          if (s.name.endsWith("_thumb.jpg")) {
-            const baseName = s.name.replace("_thumb.jpg", "");
-            thumbMap[baseName] = s.path;
-          }
+      // Build thumbnail lookup keyed by base name (extension-agnostic)
+      const thumbMap = {};
+      for (const s of source) {
+        if (s.name.endsWith("_thumb.jpg")) {
+          const baseName = s.name.replace("_thumb.jpg", "");
+          thumbMap[baseName] = s.path;
         }
-
-        // Display items exclude thumbnail files
-        const displaySource = source.filter((s) => !s.name.endsWith("_thumb.jpg"));
-
-        // Image-only fallback — never a video URL (Safari won't render it as <img>)
-        const imageItem = displaySource.find((s) =>
-          /\.(jpe?g|png|webp)$/i.test(s.name)
-        );
-        const imageOnlyFallback = imageItem?.path || "";
-
-        const items = displaySource.map((item) => {
-          const type = getMediaType(item.name);
-          const baseName = item.name.replace(/\.[^.]+$/, "");
-          const thumbnail =
-            type === "video"
-              ? thumbMap[baseName] || imageOnlyFallback
-              : item.path;
-          return {
-            name: item.name,
-            path: item.path,
-            type,
-            label: getLabel(item.name),
-            thumbnail,
-            file: null,
-          };
-        });
-
-        setMediaItems(items);
-        setLoading(false);
-      } catch (error) {
-        console.error("Failed to load media:", error, error?.diagnostics);
-        setLoadError(true);
-        // Serialize diagnostics for on-screen debugging
-        const diag = Array.isArray(error?.diagnostics)
-          ? error.diagnostics.map((d) =>
-              `#${d.attempt}/${d.via}: ${d.kind}${d.status ? ` [${d.status}]` : ""}${d.contentType ? ` ${d.contentType}` : ""}${d.message ? ` — ${d.message}` : ""}`
-            ).join("\n")
-          : (error?.message || "Unknown error");
-        setErrorDetail(diag);
-        setLoading(false);
       }
-    };
 
+      // Display items exclude thumbnail files
+      const displaySource = source.filter((s) => !s.name.endsWith("_thumb.jpg"));
+
+      // Image-only fallback — never a video URL (Safari won't render it as <img>)
+      const imageItem = displaySource.find((s) =>
+        /\.(jpe?g|png|webp)$/i.test(s.name)
+      );
+      const imageOnlyFallback = imageItem?.path || "";
+
+      const items = displaySource.map((item) => {
+        const type = getMediaType(item.name);
+        const baseName = item.name.replace(/\.[^.]+$/, "");
+        const thumbnail =
+          type === "video"
+            ? thumbMap[baseName] || imageOnlyFallback
+            : item.path;
+        return {
+          name: item.name,
+          path: item.path,
+          type,
+          label: getLabel(item.name),
+          thumbnail,
+          file: null,
+        };
+      });
+
+      setMediaItems(items);
+      setLoading(false);
+    } catch (error) {
+      console.error("Failed to load media:", error, error?.diagnostics);
+      setLoadError(true);
+      // Serialize diagnostics for on-screen debugging
+      const diag = Array.isArray(error?.diagnostics)
+        ? error.diagnostics.map((d) =>
+            `#${d.attempt}/${d.via}: ${d.kind}${d.status ? ` [${d.status}]` : ""}${d.contentType ? ` ${d.contentType}` : ""}${d.message ? ` — ${d.message}` : ""}`
+          ).join("\n")
+        : (error?.message || "Unknown error");
+      setErrorDetail(diag);
+      setLoading(false);
+    }
+  };
+
+  // Initial fetch on mount / shortUUID change.
+  useEffect(() => {
+    setAutoRetryCount(0);
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shortUUID]);
+
+  // Auto-retry while we're in a "probably still uploading" state.
+  // Triggers when the previous fetch failed (loadError) AND we haven't
+  // exhausted the retry budget. Counts down visibly so the guest knows
+  // the page is doing something rather than silently sitting on an error.
+  useEffect(() => {
+    if (!loadError || autoRetryCount >= MAX_AUTO_RETRIES) return;
+    setRetryCountdown(RETRY_INTERVAL_SEC);
+    const tickId = setInterval(() => {
+      setRetryCountdown((s) => (s > 0 ? s - 1 : 0));
+    }, 1000);
+    const retryId = setTimeout(() => {
+      setAutoRetryCount((n) => n + 1);
+      setLoading(true);
+      fetchData();
+    }, RETRY_INTERVAL_SEC * 1000);
+    return () => {
+      clearInterval(tickId);
+      clearTimeout(retryId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadError, autoRetryCount]);
 
   const handleOpen = (item) => setSelectedMedia(item);
   const handleClose = () => {
@@ -214,43 +252,90 @@ function PhotoSharePage() {
                 textAlign: "center",
               }}
             >
-              <Typography
-                color="#F4F0D3"
-                fontFamily="Boyrun"
-                fontSize="1.6em"
-                fontWeight={600}
-                sx={{ mb: "8px" }}
-              >
-                Media not found
-              </Typography>
-              <Typography color="#F4F0D3" fontFamily="Boyrun" fontSize="1em" sx={{ opacity: 0.8, mb: "20px" }}>
-                This share link may have expired or is no longer available.
-              </Typography>
-              <Button
-                variant="contained"
-                onClick={() => window.location.reload()}
-                sx={{ borderRadius: "50px", px: 4 }}
-              >
-                <Typography color="black" fontSize="1rem" fontWeight={600} textTransform="none">
-                  Try Again
-                </Typography>
-              </Button>
-              {errorDetail && (
-                <Box
-                  component="pre"
-                  sx={{
-                    mt: "20px",
-                    maxWidth: "90vw",
-                    fontSize: "0.7rem",
-                    color: "#F4F0D3",
-                    opacity: 0.6,
-                    textAlign: "left",
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                  }}
-                >
-                  {errorDetail}
-                </Box>
+              {/*
+                Two distinct states:
+                  • While auto-retry budget remains → "still uploading" copy
+                    with countdown. Most guests scan within seconds of the QR
+                    appearing on the kiosk, which is often before the kiosk's
+                    background upload has completed. This window is the common
+                    case, not an error — be reassuring, not apologetic.
+                  • Once auto-retry budget is exhausted → fall back to the
+                    original "link expired" copy. Two minutes is well past
+                    the longest realistic upload time on a slow uplink.
+              */}
+              {autoRetryCount < MAX_AUTO_RETRIES ? (
+                <>
+                  <ClipLoader color="#F4F0D3" loading={true} size={56} className="all-element-center" />
+                  <Typography
+                    color="#F4F0D3"
+                    fontFamily="Boyrun"
+                    fontSize="1.6em"
+                    fontWeight={600}
+                    sx={{ mt: "16px", mb: "8px" }}
+                  >
+                    Just a moment
+                  </Typography>
+                  <Typography color="#F4F0D3" fontFamily="Boyrun" fontSize="1em" sx={{ opacity: 0.85, mb: "6px" }}>
+                    Your photos are still being uploaded.
+                  </Typography>
+                  <Typography color="#F4F0D3" fontFamily="Boyrun" fontSize="1em" sx={{ opacity: 0.85, mb: "20px" }}>
+                    This usually takes 10–30 seconds. We'll check again in {retryCountdown}s.
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      setAutoRetryCount((n) => n + 1);
+                      setLoading(true);
+                      fetchData();
+                    }}
+                    sx={{ borderRadius: "50px", px: 4 }}
+                  >
+                    <Typography color="black" fontSize="1rem" fontWeight={600} textTransform="none">
+                      Check Now
+                    </Typography>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Typography
+                    color="#F4F0D3"
+                    fontFamily="Boyrun"
+                    fontSize="1.6em"
+                    fontWeight={600}
+                    sx={{ mb: "8px" }}
+                  >
+                    Media not found
+                  </Typography>
+                  <Typography color="#F4F0D3" fontFamily="Boyrun" fontSize="1em" sx={{ opacity: 0.8, mb: "20px" }}>
+                    This share link may have expired or is no longer available.
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    onClick={() => window.location.reload()}
+                    sx={{ borderRadius: "50px", px: 4 }}
+                  >
+                    <Typography color="black" fontSize="1rem" fontWeight={600} textTransform="none">
+                      Try Again
+                    </Typography>
+                  </Button>
+                  {errorDetail && (
+                    <Box
+                      component="pre"
+                      sx={{
+                        mt: "20px",
+                        maxWidth: "90vw",
+                        fontSize: "0.7rem",
+                        color: "#F4F0D3",
+                        opacity: 0.6,
+                        textAlign: "left",
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                      }}
+                    >
+                      {errorDetail}
+                    </Box>
+                  )}
+                </>
               )}
             </Box>
           ) : (

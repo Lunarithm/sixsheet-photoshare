@@ -31,12 +31,9 @@ export default function GalleryFilter({ apiUrl = "/api/machines/machineNos" }) {
     navigate("/login");
   };
 
-  // Click on a machineName chip -> navigate and filter by machineName
-  const onSelectMachineName = (name) => {
-    if (!name) return;
-    navigate("/gallery/result", {
-      state: { machineNames: [name] }, // pass machineName(s)
-    });
+  const onSelectMachineNo = (machineNo) => {
+    if (!machineNo) return;
+    navigate(`/gallery/result/${machineNo}`);
   };
 
   useEffect(() => {
@@ -151,14 +148,7 @@ export default function GalleryFilter({ apiUrl = "/api/machines/machineNos" }) {
             <Card elevation={3} sx={{ borderRadius: 3, height: "100%" }}>
               <CardActionArea
                 sx={{ height: "100%" }}
-                onClick={() => {
-                  // when click card → show ALL machineNames from this card
-                  if (m.names?.length) {
-                    navigate("/gallery/result", {
-                      state: { machineNames: m.names },
-                    });
-                  }
-                }}
+                onClick={() => onSelectMachineNo(m.machineNo)}
               >
                 <CardContent>
                   <Stack direction="row" alignItems="center" justifyContent="space-between">
@@ -168,7 +158,7 @@ export default function GalleryFilter({ apiUrl = "/api/machines/machineNos" }) {
 
                   <Box mt={1.5}>
                     <Typography variant="caption" color="text.secondary">
-                      Machine names (tap chip for single filter, or card for all)
+                      Machine names
                     </Typography>
 
                     <Stack direction="row" flexWrap="wrap" gap={0.5} mt={0.5}>
@@ -178,11 +168,6 @@ export default function GalleryFilter({ apiUrl = "/api/machines/machineNos" }) {
                           label={n}
                           size="small"
                           variant="outlined"
-                          clickable
-                          onClick={(e) => {
-                            e.stopPropagation(); // prevent triggering card click
-                            onSelectMachineName(n); // navigate with one name
-                          }}
                         />
                       ))}
                     </Stack>

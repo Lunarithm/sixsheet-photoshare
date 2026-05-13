@@ -24,9 +24,7 @@ export default function GalleryHome({ onSelect, apiUrl = "/api/machines/machineN
   const navigate = useNavigate();
 
   const onSelectDefault = (machineNo) => {
-    navigate("/gallery/result", {
-      state: { machineNos: [machineNo] } // pass as prop in location.state
-    });
+    navigate(`/gallery/result/${machineNo}`);
   }
 
 

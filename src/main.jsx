@@ -9,6 +9,7 @@ import ProtectedRoute from "./Pages/ProtectedRoute.jsx";
 import LoginPage from "./Pages/LoginPage.jsx";
 import GalleryFilter from "./Pages/GalleryFilter.jsx";
 import Report from "./Pages/Report.jsx";
+import RedemptionReport from "./Pages/RedemptionReport.jsx";
 import SelectPage from "./Pages/pageSelection.jsx";
 import MachinesPage from "./Pages/MachinesPage.jsx";
 import PhotoSharePage from "./Pages/PhotoSharePage.jsx";
@@ -65,6 +66,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Report />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/report/redemption",
+    element: (
+      <ProtectedRoute>
+        <RedemptionReport />
       </ProtectedRoute>
     ),
   },

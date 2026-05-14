@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { ThemeProvider } from "@mui/material/styles";
 import {
   Box,
@@ -15,6 +15,7 @@ import {
   TextField,
   Card,
   CardContent,
+  Pagination,
 } from "@mui/material";
 import CssBaseline from "@mui/material/CssBaseline";
 import Grid from "@mui/material/Grid";
@@ -26,6 +27,8 @@ import "react-date-range/dist/theme/default.css";
 import { DateRangePicker } from "react-date-range";
 import { useNavigate } from "react-router-dom";
 import { api } from "../controller/client";
+
+const PAGE_SIZE = 50;
 
 const formatNumber = (n) =>
   typeof n === "number" ? n.toLocaleString("en-US") : "0";
@@ -44,7 +47,9 @@ function RedemptionReport() {
   ]);
 
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState("");
+
   const [summary, setSummary] = useState({
     totalRedemptions: 0,
     uniqueUsers: 0,
@@ -52,50 +57,87 @@ function RedemptionReport() {
     topOffers: [],
   });
 
+  const [rows, setRows] = useState([]);
+  const [totalRows, setTotalRows] = useState(0);
+  const [page, setPage] = useState(1);
+
+  const buildBody = useCallback(() => {
+    const offerCodeList = offerCodeInput
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return {
+      selectedStart,
+      selectedEnd,
+      phoneNo: phoneNo || undefined,
+      offerCode: offerCodeList.length > 0 ? offerCodeList : undefined,
+    };
+  }, [selectedStart, selectedEnd, phoneNo, offerCodeInput]);
+
   const handleSelect = (item) => {
     if (!item?.selection) return;
     setRanges([item.selection]);
-    setSelectedStart(
-      dayjs(item.selection.startDate).format("YYYY-MM-DD"),
-    );
+    setSelectedStart(dayjs(item.selection.startDate).format("YYYY-MM-DD"));
     setSelectedEnd(dayjs(item.selection.endDate).format("YYYY-MM-DD"));
   };
 
-  const fetchSummary = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const offerCodeList = offerCodeInput
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-
-      const { data } = await api.post("/report/redemption/summary", {
-        selectedStart,
-        selectedEnd,
-        phoneNo: phoneNo || undefined,
-        offerCode: offerCodeList.length > 0 ? offerCodeList : undefined,
-      });
-
-      if (data?.success && data.data) {
-        setSummary(data.data);
-      } else {
-        setError("Unexpected response from server");
+  const fetchSummary = useCallback(
+    async (body) => {
+      try {
+        const { data } = await api.post(
+          "/report/redemption/summary",
+          body,
+        );
+        if (data?.success && data.data) {
+          setSummary(data.data);
+        }
+      } catch (err) {
+        throw err;
       }
-    } catch (err) {
-      const msg =
-        err?.response?.data?.error ||
-        err?.response?.data?.message ||
-        err?.message ||
-        "Failed to load redemption summary";
-      setError(String(msg));
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [],
+  );
+
+  const fetchList = useCallback(
+    async (body, pageNumber) => {
+      const offset = (pageNumber - 1) * PAGE_SIZE;
+      const { data } = await api.post("/report/redemption/list", {
+        ...body,
+        offset,
+        limit: PAGE_SIZE,
+      });
+      if (data?.success && data.data) {
+        setRows(data.data.rows || []);
+        setTotalRows(data.data.count || 0);
+      }
+    },
+    [],
+  );
+
+  const refresh = useCallback(
+    async (pageNumber = 1) => {
+      setLoading(true);
+      setError("");
+      const body = buildBody();
+      try {
+        await Promise.all([fetchSummary(body), fetchList(body, pageNumber)]);
+        setPage(pageNumber);
+      } catch (err) {
+        const msg =
+          err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          err?.message ||
+          "Failed to load redemption data";
+        setError(String(msg));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [buildBody, fetchSummary, fetchList],
+  );
 
   useEffect(() => {
-    fetchSummary();
+    refresh(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -112,18 +154,54 @@ function RedemptionReport() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handlePageChange = (_e, value) => {
+    refresh(value);
+  };
+
   const clearFilters = () => {
     setPhoneNo("");
     setOfferCodeInput("");
     setSelectedStart(null);
     setSelectedEnd(null);
-    setRanges([{ startDate: new Date(), endDate: new Date(), key: "selection" }]);
+    setRanges([
+      { startDate: new Date(), endDate: new Date(), key: "selection" },
+    ]);
+  };
+
+  const exportExcel = async () => {
+    setExporting(true);
+    setError("");
+    try {
+      const body = buildBody();
+      const response = await api.post(
+        "/report/redemption/download",
+        body,
+        { responseType: "blob" },
+      );
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `redemption-report-${dayjs().format("YYYYMMDD-HHmmss")}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err?.message || "Excel export failed");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const dateLabel =
     selectedStart && selectedEnd
       ? `${selectedStart}  ~  ${selectedEnd}`
       : "All time";
+
+  const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
 
   return (
     <ThemeProvider theme={theme3}>
@@ -151,7 +229,7 @@ function RedemptionReport() {
                 placeholder="partial match"
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={3}>
               <TextField
                 fullWidth
                 size="small"
@@ -191,19 +269,30 @@ function RedemptionReport() {
                 </Box>
               )}
             </Grid>
-            <Grid item xs={6} sm={1}>
+            <Grid item xs={4} sm={1}>
               <Button
                 fullWidth
                 variant="contained"
-                onClick={fetchSummary}
+                onClick={() => refresh(1)}
                 disabled={loading}
               >
                 Apply
               </Button>
             </Grid>
-            <Grid item xs={6} sm={1}>
+            <Grid item xs={4} sm={1}>
               <Button fullWidth variant="text" onClick={clearFilters}>
                 Clear
+              </Button>
+            </Grid>
+            <Grid item xs={4} sm={1}>
+              <Button
+                fullWidth
+                variant="contained"
+                color="success"
+                onClick={exportExcel}
+                disabled={exporting || loading}
+              >
+                {exporting ? "..." : "Excel"}
               </Button>
             </Grid>
           </Grid>
@@ -211,12 +300,7 @@ function RedemptionReport() {
 
         {error && (
           <Paper
-            sx={{
-              p: 2,
-              mb: 2,
-              backgroundColor: "#fee",
-              color: "#900",
-            }}
+            sx={{ p: 2, mb: 2, backgroundColor: "#fee", color: "#900" }}
           >
             {error}
           </Paper>
@@ -267,7 +351,7 @@ function RedemptionReport() {
               </Grid>
             </Grid>
 
-            <Paper sx={{ p: 2 }}>
+            <Paper sx={{ p: 2, mb: 3 }}>
               <Typography variant="h6" sx={{ mb: 2 }}>
                 Top Offers
               </Typography>
@@ -303,6 +387,75 @@ function RedemptionReport() {
                   </TableBody>
                 </Table>
               </TableContainer>
+            </Paper>
+
+            <Paper sx={{ p: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 2,
+                }}
+              >
+                <Typography variant="h6">Redemption Details</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {formatNumber(totalRows)} record(s)
+                </Typography>
+              </Box>
+              <TableContainer>
+                <Table size="small" stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Redeemed At</TableCell>
+                      <TableCell>Phone No.</TableCell>
+                      <TableCell>Line ID</TableCell>
+                      <TableCell>Offer Code</TableCell>
+                      <TableCell>Offer Reference</TableCell>
+                      <TableCell align="right">Points Used</TableCell>
+                      <TableCell>Valid Until</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {rows.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center">
+                          No data
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      rows.map((row) => (
+                        <TableRow key={row.uuid}>
+                          <TableCell>{row.createdAt ?? "-"}</TableCell>
+                          <TableCell>{row.phoneNo ?? "-"}</TableCell>
+                          <TableCell>{row.lineId ?? "-"}</TableCell>
+                          <TableCell>{row.offerCode ?? "-"}</TableCell>
+                          <TableCell>{row.offerReference ?? "-"}</TableCell>
+                          <TableCell align="right">
+                            {row.pointUsage != null
+                              ? Number(row.pointUsage).toLocaleString("en-US", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })
+                              : "-"}
+                          </TableCell>
+                          <TableCell>{row.validUntil ?? "-"}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <Box
+                sx={{ display: "flex", justifyContent: "center", mt: 2 }}
+              >
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={handlePageChange}
+                  color="primary"
+                />
+              </Box>
             </Paper>
           </>
         )}

@@ -28,6 +28,7 @@ import ReactPlayer from "react-player";
 import { ShareSocial } from "react-share-social";
 import axios from "axios";
 import ClipLoader from "react-spinners/ClipLoader";
+import { fetchMediaWithRetry, unregisterStaleServiceWorkers } from "./lib/fetchMedia";
 import { saveAs } from "file-saver";
 import QRCode from "react-qr-code";
 import src from "./assets/cap.png";
@@ -36,6 +37,8 @@ import "./assets/css/photoShare.css";
 import qrIcon from "./assets/Group 58.png";
 function App() {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [errorDetail, setErrorDetail] = useState("");
 
   const { shortUUID } = useParams();
 
@@ -57,71 +60,69 @@ function App() {
   };
 
   async function convertUrlToFile(url, type) {
+    if (!url) return null;
     const dataType = type == "img" ? "jpg" : "mp4";
-    const blobType = type == "img" ? "image/jpg" : "video/mp4";
-    // const response = await fetch(url,{mode: "cors"});
-    const response = await axios.get(url, {
-      responseType: "blob",
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-    });
-    console.log(response.data);
-    const blob = await response.data;
-    const file = new File([blob], `media_${shortUUID}.` + dataType, {
-      type: blobType,
-    });
-    if (type == "img") {
-      setImgFile(file);
-    } else {
-      setVdoFile(file);
+    const blobType = type == "img" ? "image/jpeg" : "video/mp4";
+    try {
+      const response = await axios.get(url, { responseType: "blob" });
+      const file = new File([response.data], `media_${shortUUID}.${dataType}`, {
+        type: blobType,
+      });
+      if (type == "img") setImgFile(file);
+      else setVdoFile(file);
+      return file;
+    } catch (err) {
+      console.error(`convertUrlToFile failed for ${type}:`, err);
+      return null;
     }
-    return file;
   }
 
   const dataToApp = async () => {
-    try {
-      const result = await axios.get(
-        `${import.meta.env.VITE_APIHUB_URL}/media/${shortUUID}`
-      );
-      console.log(result)
-      const png = result.data.data.source[0].path;
-      let mp4 = "";
-      if (result?.data?.data?.source[1]?.path) {
-        mp4 = result.data.data.source[1].path;
-      } else {
-        setDisplayVideo(false);
-      }
+    const { source } = await fetchMediaWithRetry(
+      import.meta.env.VITE_APIHUB_URL,
+      shortUUID
+    );
 
-      // console.log(png);
-      setPathImg(png);
-      setPathVdo(mp4);
-      if (result?.data?.data?.source[2]?.path) {
-        const thumbnail = result.data.data.source[2].path;
-        setPathThn(thumbnail);
-      } else {
-        setPathThn(png);
-      }
+    // Classify sources by file name — never assume index-based ordering
+    const imageItem = source.find(
+      (s) => /\.(jpe?g|png|webp)$/i.test(s?.name || "") && !s.name.endsWith("_thumb.jpg")
+    );
+    const videoItem = source.find((s) =>
+      /\.(mp4|webm|mov)$/i.test(s?.name || "")
+    );
+    const thumbItem = source.find((s) => (s?.name || "").endsWith("_thumb.jpg"));
 
-      await convertUrlToFile(png, "img");
-      await convertUrlToFile(mp4, "vdo");
-      // await convertUrlToFile(thumbnail, "img");
-      // setLoading(false);
-    } catch (error) {
-      console.error(error);
-    }
+    const png = imageItem?.path || "";
+    const mp4 = videoItem?.path || "";
+
+    setPathImg(png);
+    setPathVdo(mp4);
+    setPathThn(thumbItem?.path || png);
+    setDisplayVideo(Boolean(mp4));
+
+    // Pre-fetch blobs for download/share (failures are non-fatal)
+    if (png) await convertUrlToFile(png, "img");
+    if (mp4) await convertUrlToFile(mp4, "vdo");
   };
 
   useEffect(() => {
     const goData = async () => {
+      setLoadError(false);
+      setErrorDetail("");
+      await unregisterStaleServiceWorkers();
       try {
         await dataToApp();
-
-        setLoading(false);
       } catch (error) {
-        console.error(error);
+        console.error("Failed to load media after retries:", error, error?.diagnostics);
+        setLoadError(true);
+        const diag = Array.isArray(error?.diagnostics)
+          ? error.diagnostics.map((d) =>
+              `#${d.attempt}/${d.via}: ${d.kind}${d.status ? ` [${d.status}]` : ""}${d.contentType ? ` ${d.contentType}` : ""}${d.message ? ` — ${d.message}` : ""}`
+            ).join("\n")
+          : (error?.message || "Unknown error");
+        setErrorDetail(diag);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -234,6 +235,57 @@ function App() {
               size={100}
               className="all-element-center"
             />
+          ) : loadError || (!pathImg && !pathVdo) ? (
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                py: "8vh",
+                px: "4vw",
+                textAlign: "center",
+              }}
+            >
+              <Typography
+                color="#F4F0D3"
+                fontFamily="Boyrun"
+                fontSize="1.6em"
+                fontWeight={600}
+                sx={{ mb: "8px" }}
+              >
+                Media not found
+              </Typography>
+              <Typography color="#F4F0D3" fontFamily="Boyrun" fontSize="1em" sx={{ opacity: 0.8, mb: "20px" }}>
+                This share link may have expired or is no longer available.
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => window.location.reload()}
+                sx={{ borderRadius: "50px", px: 4 }}
+              >
+                <Typography color="black" fontSize="1rem" fontWeight={600} textTransform="none">
+                  Try Again
+                </Typography>
+              </Button>
+              {errorDetail && (
+                <Box
+                  component="pre"
+                  sx={{
+                    mt: "20px",
+                    maxWidth: "90vw",
+                    fontSize: "0.7rem",
+                    color: "#F4F0D3",
+                    opacity: 0.6,
+                    textAlign: "left",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {errorDetail}
+                </Box>
+              )}
+            </Box>
           ) : (
             <Grid
               item
@@ -254,10 +306,24 @@ function App() {
                 <img
                   src={pathImg}
                   alt="thumbnail"
+                  loading="lazy"
+                  decoding="async"
                   style={{
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",
+                  }}
+                  onError={(e) => {
+                    const el = e.currentTarget;
+                    const attempt = Number(el.dataset.retry || 0);
+                    const backoff = [500, 1500, 3500];
+                    if (attempt < backoff.length && pathImg) {
+                      el.dataset.retry = String(attempt + 1);
+                      setTimeout(() => {
+                        const sep = pathImg.includes("?") ? "&" : "?";
+                        el.src = `${pathImg}${sep}r=${Date.now()}.${attempt + 1}`;
+                      }, backoff[attempt]);
+                    }
                   }}
                 />
                 <Box
@@ -360,10 +426,28 @@ function App() {
                   <img
                     src={pathThn || pathImg}
                     alt="video thumbnail"
+                    loading="lazy"
+                    decoding="async"
                     style={{
                       width: "100%",
                       height: "100%",
                       objectFit: "cover",
+                    }}
+                    onError={(e) => {
+                      const el = e.currentTarget;
+                      const attempt = Number(el.dataset.retry || 0);
+                      const baseSrc = pathThn || pathImg;
+                      const backoff = [500, 1500, 3500];
+                      if (attempt < backoff.length && baseSrc) {
+                        el.dataset.retry = String(attempt + 1);
+                        setTimeout(() => {
+                          const sep = baseSrc.includes("?") ? "&" : "?";
+                          el.src = `${baseSrc}${sep}r=${Date.now()}.${attempt + 1}`;
+                        }, backoff[attempt]);
+                      } else if (attempt === backoff.length && pathImg && baseSrc !== pathImg) {
+                        el.dataset.retry = String(attempt + 1);
+                        el.src = pathImg;
+                      }
                     }}
                   />
                   <Box
@@ -450,11 +534,23 @@ function App() {
                         url={vdo}
                         controls={true}
                         loop={true}
+                        playing
+                        muted
+                        playsinline
+                        config={{
+                          file: {
+                            attributes: {
+                              playsInline: true,
+                              "webkit-playsinline": "true",
+                              preload: "metadata",
+                            },
+                          },
+                        }}
                         style={{
                           maxHeight: "80vh",
                           maxWidth: "72%",
                           position: "relative",
-                          zIdex: 99,
+                          zIndex: 99,
                           marginBottom: "20px",
                         }}
                         onClick={(e) => e.stopPropagation()}
@@ -463,13 +559,10 @@ function App() {
                       <img
                         src={image}
                         alt="Selected"
+                        decoding="async"
                         style={{
                           maxHeight: "80vh",
                           maxWidth: "68%",
-                          // marginTop: "120px",
-                          // borderTop: "5px solid Darkgray",
-                          // borderLeft: "8px solid Darkgray",
-                          // borderRight: "5px solid Darkgray",
                         }}
                         onClick={(e) => e.stopPropagation()}
                       />

@@ -18,7 +18,6 @@ import VDO from "../assets/Vector.png";
 import Backdrop from "@mui/material/Backdrop";
 import save from "../assets/saveNew.png";
 import share from "../assets/sh.png";
-import ReactPlayer from "react-player";
 import axios from "axios";
 import ClipLoader from "react-spinners/ClipLoader";
 import { fetchMediaWithRetry, unregisterStaleServiceWorkers } from "../lib/fetchMedia";
@@ -74,22 +73,28 @@ function PhotoSharePage() {
     return <PhotoIcon sx={{ fontSize: 18, mr: 0.5 }} />;
   };
 
-  // Convert URL to File object for native share API
+  // Convert URL to File object for native share API.
+  // Use native fetch with `cache: 'no-store'` instead of axios with custom
+  // Cache-Control/Pragma/Expires headers. Those request headers are
+  // non-simple per the CORS spec, which forces a preflight OPTIONS on every
+  // download — and S3 doesn't honor request-side cache directives anyway,
+  // so they were doing nothing except making CORS fragile.
   async function convertUrlToFile(url, name) {
     try {
-      const response = await axios.get(url, { responseType: "blob" });
-      const ext = name.split(".").pop().toLowerCase();
-      const mimeMap = {
-        mp4: "video/mp4",
-        webm: "video/webm",
-        mov: "video/quicktime",
-        png: "image/png",
-        jpg: "image/jpeg",
-        jpeg: "image/jpeg",
-      };
-      const mimeType = mimeMap[ext] || "application/octet-stream";
-      return new File([response.data], `${name}`, { type: mimeType });
-    } catch {
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} fetching ${url}`);
+      }
+      const blob = await response.blob();
+      const ext = name.split(".").pop();
+      const mimeType =
+        ext === "mp4" ? "video/mp4"
+        : ext === "webm" ? "video/webm"
+        : ext === "png" ? "image/png"
+        : "image/jpeg";
+      return new File([blob], name, { type: mimeType });
+    } catch (err) {
+      console.error("convertUrlToFile failed:", err);
       return null;
     }
   }
@@ -453,24 +458,34 @@ function PhotoSharePage() {
                     </Button>
 
                     {selectedMedia?.type === "video" ? (
-                      <ReactPlayer
-                        url={selectedMedia.path}
+                      // Native <video> instead of ReactPlayer:
+                      // - ReactPlayer v2 hard-codes width/height props (default
+                      //   640x360); `style` can't override those, so on PC the
+                      //   player rendered off-screen or cropped.
+                      // - `autoPlay` MUST pair with `muted` on desktop browsers,
+                      //   otherwise the autoplay promise is rejected and the
+                      //   video appears broken.
+                      // - `playsInline` keeps iOS from going full-screen.
+                      <video
+                        src={selectedMedia.path}
                         controls
                         loop
-                        playing
+                        autoPlay
                         muted
-                        playsinline
-                        config={{
-                          file: {
-                            attributes: {
-                              playsInline: true,
-                              "webkit-playsinline": "true",
-                              preload: "metadata",
-                            },
-                          },
+                        playsInline
+                        preload="metadata"
+                        style={{
+                          maxHeight: "80vh",
+                          maxWidth: "72vw",
+                          width: "auto",
+                          height: "auto",
+                          position: "relative",
+                          zIndex: 99,
+                          marginBottom: "20px",
+                          background: "black",
                         }}
-                        style={{ maxHeight: "80vh", maxWidth: "72%", position: "relative", zIndex: 99, marginBottom: "20px" }}
                         onClick={(e) => e.stopPropagation()}
+                        onError={(e) => console.error("Video error:", e?.currentTarget?.error)}
                       />
                     ) : selectedMedia?.type === "image" ? (
                       <img

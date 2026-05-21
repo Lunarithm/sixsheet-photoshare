@@ -60,21 +60,28 @@ function PhotoSharePage() {
     return <PhotoIcon sx={{ fontSize: 18, mr: 0.5 }} />;
   };
 
-  // Convert URL to File object for native share API
+  // Convert URL to File object for native share API.
+  // Use native fetch with `cache: 'no-store'` instead of axios with custom
+  // Cache-Control/Pragma/Expires headers. Those request headers are
+  // non-simple per the CORS spec, which forces a preflight OPTIONS on every
+  // download — and S3 doesn't honor request-side cache directives anyway,
+  // so they were doing nothing except making CORS fragile.
   async function convertUrlToFile(url, name) {
     try {
-      const response = await axios.get(url, {
-        responseType: "blob",
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      });
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} fetching ${url}`);
+      }
+      const blob = await response.blob();
       const ext = name.split(".").pop();
-      const mimeType = ext === "mp4" ? "video/mp4" : ext === "webm" ? "video/webm" : "image/jpeg";
-      return new File([response.data], `${name}`, { type: mimeType });
-    } catch {
+      const mimeType =
+        ext === "mp4" ? "video/mp4"
+        : ext === "webm" ? "video/webm"
+        : ext === "png" ? "image/png"
+        : "image/jpeg";
+      return new File([blob], name, { type: mimeType });
+    } catch (err) {
+      console.error("convertUrlToFile failed:", err);
       return null;
     }
   }

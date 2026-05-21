@@ -18,7 +18,6 @@ import VDO from "../assets/Vector.png";
 import Backdrop from "@mui/material/Backdrop";
 import save from "../assets/saveNew.png";
 import share from "../assets/sh.png";
-import ReactPlayer from "react-player";
 import axios from "axios";
 import ClipLoader from "react-spinners/ClipLoader";
 import { saveAs } from "file-saver";
@@ -289,11 +288,34 @@ function PhotoSharePage() {
                     </Button>
 
                     {selectedMedia?.type === "video" ? (
-                      <ReactPlayer
-                        url={selectedMedia.path}
-                        controls loop playing
-                        style={{ maxHeight: "80vh", maxWidth: "72%", position: "relative", zIndex: 99, marginBottom: "20px" }}
+                      // Native <video> instead of ReactPlayer:
+                      // - ReactPlayer v2 hard-codes width/height props (default
+                      //   640x360); `style` can't override those, so on PC the
+                      //   player rendered off-screen or cropped.
+                      // - `autoPlay` MUST pair with `muted` on desktop browsers,
+                      //   otherwise the autoplay promise is rejected and the
+                      //   video appears broken.
+                      // - `playsInline` keeps iOS from going full-screen.
+                      <video
+                        src={selectedMedia.path}
+                        controls
+                        loop
+                        autoPlay
+                        muted
+                        playsInline
+                        preload="metadata"
+                        style={{
+                          maxHeight: "80vh",
+                          maxWidth: "72vw",
+                          width: "auto",
+                          height: "auto",
+                          position: "relative",
+                          zIndex: 99,
+                          marginBottom: "20px",
+                          background: "black",
+                        }}
                         onClick={(e) => e.stopPropagation()}
+                        onError={(e) => console.error("Video error:", e?.currentTarget?.error)}
                       />
                     ) : selectedMedia?.type === "image" ? (
                       <img

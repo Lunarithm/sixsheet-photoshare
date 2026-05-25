@@ -13,6 +13,7 @@ import RedemptionReport from "./Pages/RedemptionReport.jsx";
 import SelectPage from "./Pages/pageSelection.jsx";
 import MachinesPage from "./Pages/MachinesPage.jsx";
 import PhotoSharePage from "./Pages/PhotoSharePage.jsx";
+import VisaSharePage from "./Pages/VisaSharePage.jsx";
 
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
@@ -24,6 +25,10 @@ const router = createBrowserRouter([
   {
     path: "/photoshare/:shortUUID",
     element: <PhotoSharePage />,
+  },
+  {
+    path: "/visa/:shortUUID",
+    element: <VisaSharePage />,
   },
   {
     path: "/admin",

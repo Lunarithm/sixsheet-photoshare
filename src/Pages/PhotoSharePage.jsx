@@ -146,6 +146,15 @@ function PhotoSharePage() {
         };
       });
 
+      // Image-first ordering so the photo always renders on the LEFT and
+      // the video on the RIGHT, regardless of the order apihub returned
+      // the assets in. Stable sort: items of the same type keep their
+      // original ordering.
+      items.sort((a, b) => {
+        if (a.type === b.type) return 0;
+        return a.type === "image" ? -1 : 1;
+      });
+
       setMediaItems(items);
       setLoading(false);
     } catch (error) {
@@ -229,15 +238,25 @@ function PhotoSharePage() {
         maxWidth={false}
         disableGutters
         component="main"
-        sx={{ justifyContent: "center", alignItems: "center", textAlign: "center" }}
+        sx={{
+          // Whole-viewport flex column so the header, media row, QR
+          // button, and footer all share a single 100vh budget — no
+          // scrolling on a typical phone-portrait viewport.
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "flex-start",
+          alignItems: "center",
+          textAlign: "center",
+          minHeight: "100vh",
+        }}
       >
         {/* Header */}
-        <Grid container justifyContent="center" alignItems="center" direction="column" sx={{ pt: "40px" }}>
+        <Grid container justifyContent="center" alignItems="center" direction="column" sx={{ pt: "16px" }}>
           <Grid item size={{ xs: 10, md: 8 }}>
-            <img src={src} style={{ maxWidth: "100%", maxHeight: "50%", display: "block", margin: "0 auto" }} alt="Logo" />
+            <img src={src} style={{ maxWidth: "70%", maxHeight: "14vh", display: "block", margin: "0 auto" }} alt="Logo" />
           </Grid>
           <Grid item size={{ xs: 10, md: 12 }}>
-            <Typography className="text-dowload-photo-share">DOWNLOAD* Your file</Typography>
+            <Typography className="text-dowload-photo-share" sx={{ pt: "0.4em !important", pb: "0.4em !important" }}>DOWNLOAD* Your file</Typography>
           </Grid>
         </Grid>
 
@@ -344,16 +363,33 @@ function PhotoSharePage() {
               )}
             </Box>
           ) : (
-            <Grid item size={{ xs: 12, md: 12 }} container spacing={2} className="all-element-center">
+            <Grid
+              item
+              size={{ xs: 12, md: 12 }}
+              container
+              spacing={2}
+              className="all-element-center"
+              sx={{
+                // Force a single row so image (left) + video (right)
+                // sit side-by-side rather than wrapping. Each card is
+                // capped so the pair plus the surrounding chrome fit
+                // inside one viewport without scrolling.
+                flexWrap: "nowrap",
+                justifyContent: "center",
+              }}
+            >
               {mediaItems.map((item, idx) => (
                 <Box
                   key={idx}
                   sx={{
                     position: "relative",
-                    maxWidth: mediaItems.length <= 2 ? "44vw" : "30vw",
-                    height: "30vh",
+                    flex: "0 1 auto",
+                    width: mediaItems.length <= 2 ? "min(44vw, 280px)" : "min(30vw, 220px)",
+                    aspectRatio: "3 / 4",
+                    maxHeight: "52vh",
                     borderRadius: "10px",
-                    border: "12px solid #F4F0D3",
+                    border: "10px solid #F4F0D3",
+                    boxSizing: "border-box",
                   }}
                 >
                   {/* Thumbnail — image-only, with exponential retry on Safari fetch failures */}
@@ -525,7 +561,7 @@ function PhotoSharePage() {
         </Box>
 
         {/* QR button */}
-        <Grid container justifyContent="center" alignItems="center">
+        <Grid container justifyContent="center" alignItems="center" sx={{ mt: "16px" }}>
           <Grid item size={{ xs: 8, md: 4 }} className="all-element-center">
             <Button variant="contained" className="button-QR-element color-button all-element-center"
               onClick={() => setShowPopup(true)}>

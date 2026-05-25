@@ -1,0 +1,196 @@
+/* Visa-styled photoshare page — mirrors the kiosk's VisaShare aesthetic:
+   deep blue base + paper-grain multiply, white VISA logo top-right,
+   polaroid media card centered, white "Show QR" pill, blue yeti + cat
+   mascot anchored to the bottom edge. */
+
+.visa-share-page {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+  background: #1a37ca;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: clamp(220px, 38vh, 360px);
+  box-sizing: border-box;
+}
+
+.visa-share-page__bg {
+  position: absolute;
+  inset: 0;
+  background: #1a37ca;
+  z-index: 0;
+}
+
+.visa-share-page__texture {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  mix-blend-mode: multiply;
+  opacity: 0.7;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.visa-share-page__logo {
+  position: absolute;
+  top: clamp(16px, 3vh, 28px);
+  right: clamp(16px, 4vw, 32px);
+  width: clamp(64px, 14vw, 110px);
+  height: auto;
+  z-index: 4;
+  user-select: none;
+  pointer-events: none;
+}
+
+.visa-share-page__content {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: clamp(72px, 12vh, 110px) clamp(16px, 5vw, 32px) 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(24px, 4vh, 40px);
+  box-sizing: border-box;
+}
+
+/* Polaroid-style card list — single image dominates the viewport, but if
+   multiple media items come down they stack vertically. */
+.visa-share-page__cards {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(16px, 3vh, 28px);
+  width: 100%;
+}
+
+.visa-share-page__card {
+  appearance: none;
+  border: none;
+  padding: 0;
+  background: transparent;
+  border-radius: 14px;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  width: min(92%, 360px);
+  aspect-ratio: 3 / 4;
+  position: relative;
+  transition: transform 140ms ease;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.visa-share-page__card:hover {
+  transform: translateY(-2px);
+}
+
+.visa-share-page__card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 4px;
+}
+
+.visa-share-page__card-play {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.5);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 32%;
+  pointer-events: none;
+}
+
+/* White rounded pill, QR glyph + "Show QR" label — matches the mock. */
+.visa-share-page__qr-btn {
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  background: #ffffff;
+  color: #1a1a1a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 36px;
+  border-radius: 999px;
+  font-size: clamp(15px, 2vh, 18px);
+  font-weight: 600;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.visa-share-page__qr-btn:hover {
+  background: #f4f0d3;
+}
+
+.visa-share-page__qr-btn:active {
+  transform: translateY(1px);
+}
+
+.visa-share-page__qr-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #1a1a1a;
+}
+
+.visa-share-page__qr-label {
+  letter-spacing: 0.2px;
+}
+
+/* Mascot — anchored to the bottom edge, full-width but capped so it
+   doesn't dominate landscape viewports. pointer-events:none so nothing
+   beneath gets blocked. */
+.visa-share-page__mascot {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(96%, 520px);
+  height: auto;
+  z-index: 2;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Status block (loading / retry / error) — kept inside the content
+   column so it sits where the photo card would. */
+.visa-share-page__status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: clamp(24px, 6vh, 48px) clamp(16px, 5vw, 32px);
+}
+
+.visa-share-page__status-title {
+  color: #ffffff;
+  font-size: clamp(20px, 3vh, 28px);
+  font-weight: 700;
+  margin-top: 16px;
+}
+
+.visa-share-page__status-text {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: clamp(14px, 1.9vh, 17px);
+}
+
+.visa-share-page__status-debug {
+  margin-top: 16px;
+  max-width: 90vw;
+  font-size: 0.7rem;
+  color: #ffffff;
+  opacity: 0.55;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

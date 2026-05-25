@@ -363,19 +363,20 @@ function PhotoSharePage() {
               )}
             </Box>
           ) : (
-            <Grid
-              item
-              size={{ xs: 12, md: 12 }}
-              container
-              spacing={2}
-              className="all-element-center"
+            <Box
               sx={{
-                // Force a single row so image (left) + video (right)
-                // sit side-by-side rather than wrapping. Each card is
-                // capped so the pair plus the surrounding chrome fit
-                // inside one viewport without scrolling.
+                // Plain row flexbox — explicit row direction beats any
+                // ambiguity from the parent Grid's column direction so
+                // image (left) + video (right) stay side-by-side instead
+                // of stacking. Cards are capped so the whole page still
+                // fits inside one viewport.
+                display: "flex",
+                flexDirection: "row",
                 flexWrap: "nowrap",
                 justifyContent: "center",
+                alignItems: "center",
+                gap: "16px",
+                width: "100%",
               }}
             >
               {mediaItems.map((item, idx) => (
@@ -430,7 +431,7 @@ function PhotoSharePage() {
 
                 </Box>
               ))}
-            </Grid>
+            </Box>
           )}
         </Grid>
 

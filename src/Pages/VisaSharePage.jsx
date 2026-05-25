@@ -253,9 +253,6 @@ function VisaSharePage() {
             </div>
           ) : (
             <>
-              {/* Polaroid-style card. With a single composite (the common
-                  visa case) it dominates the viewport; with multiple media
-                  items they stack vertically and stay scannable. */}
               <div className="visa-share-page__cards">
                 {mediaItems.map((item, idx) => (
                   <button
@@ -299,7 +296,6 @@ function VisaSharePage() {
                 onClick={() => setShowPopup(true)}
               >
                 <span className="visa-share-page__qr-icon" aria-hidden="true">
-                  {/* Simple QR glyph — matches the inline icon in the mock */}
                   <svg viewBox="0 0 24 24" width="20" height="20">
                     <path
                       fill="currentColor"
@@ -321,8 +317,6 @@ function VisaSharePage() {
           draggable={false}
         />
 
-        {/* QR popup — kept from the original PhotoSharePage so customers
-            can hand off the link via a second device. */}
         {showPopup && (
           <div
             className="overlay-box-Qr"
@@ -364,7 +358,6 @@ function VisaSharePage() {
           </div>
         )}
 
-        {/* Media viewer modal — unchanged behavior from PhotoSharePage. */}
         <Box onClick={handleClose}>
           <Modal open={!!selectedMedia} closeAfterTransition BackdropComponent={Backdrop}>
             <Fade in={!!selectedMedia}>

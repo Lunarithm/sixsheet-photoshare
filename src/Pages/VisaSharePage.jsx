@@ -334,8 +334,7 @@ function VisaSharePage() {
               style={{
                 position: "relative", display: "flex", flexDirection: "column",
                 alignItems: "center", justifyContent: "center",
-                borderRadius: "20px", background: "rgba(255, 255, 255, 0.1)",
-                padding: "24px",
+                borderRadius: "20px",
               }}
             >
               <Button

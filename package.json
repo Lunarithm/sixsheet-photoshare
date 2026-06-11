@@ -16,7 +16,7 @@
     "@mui/material": "^7.0.2",
     "@mui/x-date-pickers": "^8.24.0",
     "@mui/x-date-pickers-pro": "^8.24.0",
-    "axios": "^1.7.9",
+    "axios": "^1.15.2",
     "dayjs": "^1.11.19",
     "file-saver": "^2.0.5",
     "moment-timezone": "^0.5.48",

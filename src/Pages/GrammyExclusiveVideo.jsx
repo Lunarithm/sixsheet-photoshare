@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { theme } from "../assets/theme";
@@ -31,12 +32,19 @@ const VIDEO_FILENAME = "grammy-exclusive-video.mp4";
 const SERIAL_STORAGE_KEY = "grammyExclusiveSerial";
 const RUNNING_PREFIX = "MP";
 const RUNNING_PAD = 4;
+// Format a numeric running number as "NO. MP0001".
+function formatSerial(n) {
+  return `NO. ${RUNNING_PREFIX}${String(n).padStart(RUNNING_PAD, "0")}`;
+}
+
+// Fallback only — a per-device serial for direct visits that arrive without the
+// kiosk-assigned ?no=. The real reward link always carries the claimed number.
 function getOrCreateSerial() {
   try {
     const existing = localStorage.getItem(SERIAL_STORAGE_KEY);
     if (existing) return existing;
     const n = Math.floor(Math.random() * 10 ** RUNNING_PAD) || 1;
-    const serial = `NO. ${RUNNING_PREFIX}${String(n).padStart(RUNNING_PAD, "0")}`;
+    const serial = formatSerial(n);
     localStorage.setItem(SERIAL_STORAGE_KEY, serial);
     return serial;
   } catch {
@@ -53,8 +61,18 @@ function getOrCreateSerial() {
 function GrammyExclusiveVideo() {
   const videoRef = useRef(null);
   const [paused, setPaused] = useState(true);
-  // Lazy init runs once: read or assign this device's running number.
-  const [serial] = useState(getOrCreateSerial);
+  const [searchParams] = useSearchParams();
+  // Prefer the kiosk-assigned running number from the link (?no=42); fall back
+  // to a per-device serial for direct visits without one.
+  const [serial] = useState(() => {
+    const no = searchParams.get("no");
+    if (no && /^\d+$/.test(no)) {
+      const s = formatSerial(no);
+      try { localStorage.setItem(SERIAL_STORAGE_KEY, s); } catch { /* ignore */ }
+      return s;
+    }
+    return getOrCreateSerial();
+  });
 
   // Play in native fullscreen rather than inline. iOS Safari only supports
   // fullscreen on the <video> element via webkitEnterFullscreen (which also

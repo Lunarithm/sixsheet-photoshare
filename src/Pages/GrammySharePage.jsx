@@ -24,14 +24,12 @@ const assetWhere = (pred) => {
   const entry = Object.entries(GRAMMY_ASSETS).find(([path]) => pred(basename(path)));
   return entry ? entry[1] : null;
 };
-const BG_ASSET = assetWhere((b) => b.includes("bg") || b.includes("background"));
+// Pick photoshare_bg specifically (not exclusive_bg, which also contains "bg").
+const BG_ASSET =
+  assetWhere((b) => b.includes("photoshare")) ||
+  assetWhere((b) => b.includes("bg") && !b.includes("exclusive"));
 const LIVEPHOTO_BTN = assetWhere((b) => b.startsWith("livephoto") || b.includes("live"));
 const PHOTO_BTN = assetWhere((b) => b.startsWith("photo") && !b.includes("share") && !b.includes("bg"));
-
-// Native portrait dimensions of the background artwork, so the frame keeps the
-// baked header/footer aligned with the content overlay at any viewport size.
-const BG_W = 1725;
-const BG_H = 3734;
 
 // Running-number format: "NO. MP0001". Derived deterministically from the share
 // id so every visit to the same page shows the SAME unique serial. This is not a
@@ -231,10 +229,7 @@ function GrammySharePage() {
       <div className="grammy-share-page">
         <div
           className="grammy-share-frame"
-          style={{
-            aspectRatio: `${BG_W} / ${BG_H}`,
-            backgroundImage: BG_ASSET ? `url(${BG_ASSET})` : undefined,
-          }}
+          style={{ backgroundImage: BG_ASSET ? `url(${BG_ASSET})` : undefined }}
         >
           {/* Content sits in the gray middle band of the artwork */}
           <div className="grammy-share-frame__overlay">
@@ -252,7 +247,7 @@ function GrammySharePage() {
                       Your photos are still being uploaded.
                     </Typography>
                     <Typography className="grammy-share-frame__status-text">
-                      We'll check again in {retryCountdown}s.
+                      We&apos;ll check again in {retryCountdown}s.
                     </Typography>
                   </>
                 ) : (

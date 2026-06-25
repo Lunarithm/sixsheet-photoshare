@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -19,7 +19,6 @@ const assetWhere = (pred) => {
   return entry ? entry[1] : null;
 };
 const BG_ASSET = assetWhere((b) => b.includes("exclusive") && b.includes("bg"));
-const PLAY_ASSET = assetWhere((b) => b.startsWith("play"));
 
 // The fixed exclusive reward video.
 const VIDEO_URL = "https://sx-photoshare.s3.ap-southeast-2.amazonaws.com/grammy/Video+Ex.mp4";
@@ -59,8 +58,6 @@ function getOrCreateSerial() {
  * shares (or downloads) the clip. Served at /grammy-exclusive-video.
  */
 function GrammyExclusiveVideo() {
-  const videoRef = useRef(null);
-  const [paused, setPaused] = useState(true);
   const [searchParams] = useSearchParams();
   // Prefer the kiosk-assigned running number from the link (?no=42); fall back
   // to a per-device serial for direct visits without one.
@@ -73,29 +70,6 @@ function GrammyExclusiveVideo() {
     }
     return getOrCreateSerial();
   });
-
-  // Play in native fullscreen rather than inline. iOS Safari only supports
-  // fullscreen on the <video> element via webkitEnterFullscreen (which also
-  // starts playback); other browsers use the standard requestFullscreen.
-  const play = () => {
-    const v = videoRef.current;
-    if (!v) return;
-    const enterFs =
-      v.requestFullscreen ||
-      v.webkitRequestFullscreen ||
-      v.webkitEnterFullscreen ||
-      v.msRequestFullscreen;
-    try {
-      if (enterFs) {
-        const result = enterFs.call(v);
-        if (result && typeof result.catch === "function") result.catch(() => {});
-      }
-    } catch {
-      /* fullscreen blocked — fall back to inline playback below */
-    }
-    v.play().catch(() => {});
-  };
-  const pause = () => videoRef.current?.pause();
 
   // Labelled "DOWNLOAD" but prefers the native share sheet (which includes
   // "Save"), falling back to a direct download, then to opening the file.
@@ -131,27 +105,12 @@ function GrammyExclusiveVideo() {
           <div className="grammy-exclusive__overlay">
             <div className="grammy-exclusive__video-wrap">
               <video
-                ref={videoRef}
                 src={VIDEO_URL}
                 playsInline
                 controls
-                preload="metadata"
+                preload="auto"
                 className="grammy-exclusive__video"
-                onPlay={() => setPaused(false)}
-                onPause={() => setPaused(true)}
-                onEnded={() => setPaused(true)}
-                onClick={pause}
               />
-              {paused && PLAY_ASSET && (
-                <button
-                  type="button"
-                  className="grammy-exclusive__play"
-                  onClick={play}
-                  aria-label="Play video"
-                >
-                  <img src={PLAY_ASSET} alt="" />
-                </button>
-              )}
             </div>
 
             <button

@@ -31,7 +31,9 @@ export async function fetchMediaWithRetry(apiBase, shortUUID) {
 
       const source = pickSource(data);
       if (source && source.length > 0) {
-        return { source, diagnostics };
+        // `raw` is the full parsed payload so callers can read extra fields
+        // (e.g. a server-assigned running number) without another request.
+        return { source, raw: data, diagnostics };
       }
 
       diagnostics.push({ attempt, via, status, contentType, kind: "empty-source", bodyKeys: data && typeof data === "object" ? Object.keys(data) : [] });

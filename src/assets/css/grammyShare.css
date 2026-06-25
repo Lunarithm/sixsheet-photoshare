@@ -1,0 +1,188 @@
+/* ============================================================
+   Grammy share page (portrait)
+   The background artwork (src/assets/grammy/photoshare_bg.png) bakes in the
+   header, logos and decorations; this sheet lays the content into the gray
+   middle band. The frame keeps the artwork's native portrait aspect so the
+   percentage-positioned overlay always lines up with the baked design.
+   Brand palette: green #58BC47, pink #EB4994.
+   ============================================================ */
+
+.grammy-share-page {
+  position: fixed;
+  inset: 0;
+  background: #0a0a23;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  font-family: "Syne", system-ui, sans-serif;
+}
+
+/* Portrait artwork frame — fit the whole design within the viewport (height-
+   bound in portrait, capped on wide screens) so the baked header/footer and the
+   overlaid content stay aligned. aspect-ratio is set inline from the art size. */
+.grammy-share-frame {
+  position: relative;
+  height: 100vh;
+  max-height: 100vh;
+  width: auto;
+  max-width: 100vw;
+  background-color: #d8d8d8;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+/* Content band over the gray middle of the artwork (between the PHOTOSHOOT
+   header and the Meepooh footer). */
+.grammy-share-frame__overlay {
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  top: 14%;
+  bottom: 13%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3%;
+}
+
+/* ====== Carousel (photo ↔ live photo) ====== */
+.grammy-share-frame__carousel {
+  flex: 0 1 auto;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.grammy-share-frame__carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.grammy-share-frame__slide {
+  flex: 0 0 100%;
+  width: 100%;
+  height: auto;
+  /* Vertical room so the tilted media's corners aren't clipped by the
+     carousel's overflow. */
+  padding: 18px 0;
+  scroll-snap-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grammy-share-frame__media-el {
+  /* Smaller than the band so the PHOTOSHOOT title shows above and the Meepooh
+     logo shows below, with a slight playful tilt. */
+  max-width: 78%;
+  max-height: 44vh;
+  width: auto;
+  height: auto;
+  border-radius: 14px;
+  background: #000;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
+  object-fit: contain;
+  transform: rotate(-3deg);
+}
+
+/* ====== Carousel dots ====== */
+.grammy-share-frame__dots {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.grammy-share-frame__dot {
+  width: clamp(10px, 1.6vh, 14px);
+  height: clamp(10px, 1.6vh, 14px);
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid #eb4994;
+  background: transparent;
+  cursor: pointer;
+  transition: background 140ms ease, transform 140ms ease;
+}
+
+.grammy-share-frame__dot.is-active {
+  background: #eb4994;
+  transform: scale(1.1);
+}
+
+/* ====== PHOTO / LIVE PHOTO image buttons ====== */
+.grammy-share-frame__buttons {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 4%;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+}
+
+.grammy-share-frame__btn {
+  flex: 0 1 auto;
+  max-width: 44%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+  transition: transform 140ms ease, filter 140ms ease;
+}
+
+.grammy-share-frame__btn:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.grammy-share-frame__btn:active {
+  transform: scale(0.97);
+}
+
+.grammy-share-frame__btn img {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35));
+}
+
+/* ====== Running number — bottom-right corner ====== */
+.grammy-share-frame__serial {
+  position: absolute;
+  right: 5%;
+  bottom: 2%;
+  z-index: 3;
+  color: #eb4994;
+  font-weight: 700;
+  font-size: clamp(0.55rem, 1.25vh, 0.8rem);
+  letter-spacing: 0.05em;
+}
+
+/* ====== Status (loading / retry / error) ====== */
+.grammy-share-frame__status {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  color: #1a1a2e;
+}
+
+.grammy-share-frame__status-title {
+  font-size: clamp(1.1rem, 3vh, 1.5rem) !important;
+  font-weight: 800 !important;
+  color: #2f7d31 !important;
+}
+
+.grammy-share-frame__status-text {
+  font-size: clamp(0.85rem, 2vh, 1rem) !important;
+  color: #444 !important;
+}

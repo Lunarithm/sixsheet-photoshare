@@ -93,10 +93,9 @@
   max-height: 44vh;
   width: auto;
   height: auto;
-  border-radius: 14px;
   background: #000;
   object-fit: contain;
-  transform: rotate(-3deg);
+  transform: translateY(6%) rotate(-3deg);
 }
 
 /* ====== Carousel dots ====== */
@@ -109,11 +108,11 @@
 }
 
 .grammy-share-frame__dot {
-  width: clamp(10px, 1.6vh, 14px);
-  height: clamp(10px, 1.6vh, 14px);
+  width: clamp(5px, 0.85vh, 7px);
+  height: clamp(5px, 0.85vh, 7px);
   padding: 0;
   border-radius: 50%;
-  border: 2px solid #eb4994;
+  border: 1.5px solid #eb4994;
   background: transparent;
   cursor: pointer;
   transition: background 140ms ease, transform 140ms ease;
@@ -135,7 +134,7 @@
 }
 
 .grammy-share-frame__btn {
-  flex: 0 1 auto;
+  flex: 1 1 0;
   max-width: 44%;
   padding: 0;
   border: none;
@@ -157,13 +156,14 @@
   width: 100%;
   height: auto;
   display: block;
+  border-radius: 12px;
 }
 
 /* ====== Running number — bottom-right corner ====== */
 .grammy-share-frame__serial {
   position: absolute;
   right: 5%;
-  bottom: 2%;
+  bottom: 0.5%;
   z-index: 3;
   color: #eb4994;
   font-family: "Poppins", system-ui, sans-serif;

@@ -203,9 +203,9 @@
    ============================================================ */
 .grammy-exclusive__overlay {
   position: absolute;
-  left: 4%;
-  right: 4%;
-  top: 37%;
+  left: 0;
+  right: 0;
+  top: 35%;
   bottom: 11%;
   display: flex;
   flex-direction: column;
@@ -218,11 +218,9 @@
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  border-radius: 16px;
+  border-radius: 10px;
   overflow: hidden;
   background: #000;
-  border: 0.7vh solid #eb4994;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
 }
 
 .grammy-exclusive__video {

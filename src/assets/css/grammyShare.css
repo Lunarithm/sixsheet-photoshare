@@ -127,7 +127,7 @@
 .grammy-share-frame__buttons {
   flex: 0 0 auto;
   display: flex;
-  gap: 4%;
+  gap: 0%;
   width: 100%;
   justify-content: center;
   align-items: center;
@@ -144,6 +144,11 @@
   transition: transform 140ms ease, filter 140ms ease;
 }
 
+/* LIVE PHOTO (second button) a touch taller than PHOTO. */
+.grammy-share-frame__btn:last-child {
+  transform: scaleY(1.08);
+}
+
 .grammy-share-frame__btn:hover {
   transform: translateY(-2px) scale(1.02);
 }
@@ -156,7 +161,7 @@
   width: 100%;
   height: auto;
   display: block;
-  border-radius: 12px;
+  border-radius: 20px;
 }
 
 /* ====== Running number — bottom-right corner ====== */

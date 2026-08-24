@@ -1,37 +1,43 @@
-import { useState, useEffect } from "react";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import {
-  Box,
-  Container,
-  Modal,
-  Fade,
-  Button,
-  Typography,
-} from "@mui/material";
+import { useState, useEffect, useMemo } from "react";
+import { ThemeProvider } from "@mui/material/styles";
+import { Box, Container, Button, Typography, GlobalStyles } from "@mui/material";
 import CssBaseline from "@mui/material/CssBaseline";
-import Grid from "@mui/material/Grid";
 import { theme } from "../assets/theme";
 import "../index.css";
 import { useParams } from "react-router-dom";
-import icon from "../assets/group92.png";
-import VDO from "../assets/Vector.png";
-import Backdrop from "@mui/material/Backdrop";
-import save from "../assets/saveNew.png";
-import share from "../assets/sh.png";
-import axios from "axios";
 import ClipLoader from "react-spinners/ClipLoader";
 import { fetchMediaWithRetry, unregisterStaleServiceWorkers } from "../lib/fetchMedia";
-import { saveAs } from "file-saver";
 import QRCode from "react-qr-code";
-import src from "../assets/cap.png";
 import "../assets/font.css";
 import "../assets/css/photoShare.css";
-import qrIcon from "../assets/Group 58.png";
+// Top-center logo icon — swap this file (or change the path) to change the icon.
+import capturesIcon from "../assets/iconCap.png";
 
-// Icons for media type labels
-import PhotoIcon from "@mui/icons-material/Photo";
-import SlideshowIcon from "@mui/icons-material/Slideshow";
-import VideocamIcon from "@mui/icons-material/Videocam";
+const ACCENT = "#D4FF3D";
+const TYPES = [
+  { key: "PRINT", label: "PRINT", mediaLabel: "Photo" },
+  { key: "LIVE_PHOTO", label: "LIVE PHOTO", mediaLabel: "Video" },
+  { key: "GIF", label: "GIF", mediaLabel: "Slideshow" },
+];
+
+function QrGlyph({ size = 22 }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
+      <g fill="#fff">
+        <rect x="2" y="2" width="8" height="8" rx="1.5" />
+        <rect x="4" y="4" width="4" height="4" fill="#000" />
+        <rect x="14" y="2" width="8" height="8" rx="1.5" />
+        <rect x="16" y="4" width="4" height="4" fill="#000" />
+        <rect x="2" y="14" width="8" height="8" rx="1.5" />
+        <rect x="4" y="16" width="4" height="4" fill="#000" />
+        <rect x="13" y="13" width="3" height="3" />
+        <rect x="18" y="13" width="4" height="3" />
+        <rect x="13" y="18" width="3" height="4" />
+        <rect x="18" y="18" width="4" height="4" />
+      </g>
+    </svg>
+  );
+}
 
 function PhotoSharePage() {
   const { shortUUID } = useParams();
@@ -39,52 +45,29 @@ function PhotoSharePage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [errorDetail, setErrorDetail] = useState("");
-  const [mediaItems, setMediaItems] = useState([]); // [{ name, path, type, file }]
-  const [selectedMedia, setSelectedMedia] = useState(null); // current item in modal
-  const [showPopup, setShowPopup] = useState(false);
-  // Auto-retry tracking for the "still uploading" friendly state.
-  // The kiosk now ships uploads in the background after the QR appears, so a
-  // guest who scans within ~5-15s may arrive before the upload completes.
-  // Rather than show "Media not found" immediately, we silently re-poll the
-  // apihub for ~2 minutes, surfacing a gentle "your photos are still being
-  // uploaded" message during that window. After MAX_AUTO_RETRIES we fall
-  // back to the original "link may have expired" copy.
+  const [mediaItems, setMediaItems] = useState([]);
+  const [selectedType, setSelectedType] = useState("LIVE_PHOTO");
+  const [showQr, setShowQr] = useState(false);
   const [autoRetryCount, setAutoRetryCount] = useState(0);
   const [retryCountdown, setRetryCountdown] = useState(0);
-  const MAX_AUTO_RETRIES = 12; // 12 * 10s ≈ 2 minutes total
+  const MAX_AUTO_RETRIES = 12;
   const RETRY_INTERVAL_SEC = 10;
 
-  // Determine media type from file name
   const getMediaType = (name) => {
     if (name.endsWith(".mp4") || name.endsWith(".webm") || name.endsWith(".mov")) return "video";
     return "image";
   };
 
-  // Determine display label from file name
   const getLabel = (name) => {
     if (name.startsWith("slideshow")) return "Slideshow";
     if (name.startsWith("video_Result")) return "Video";
     return "Photo";
   };
 
-  const getLabelIcon = (name) => {
-    if (name.startsWith("slideshow")) return <SlideshowIcon sx={{ fontSize: 18, mr: 0.5 }} />;
-    if (name.startsWith("video_Result")) return <VideocamIcon sx={{ fontSize: 18, mr: 0.5 }} />;
-    return <PhotoIcon sx={{ fontSize: 18, mr: 0.5 }} />;
-  };
-
-  // Convert URL to File object for native share API.
-  // Use native fetch with `cache: 'no-store'` instead of axios with custom
-  // Cache-Control/Pragma/Expires headers. Those request headers are
-  // non-simple per the CORS spec, which forces a preflight OPTIONS on every
-  // download — and S3 doesn't honor request-side cache directives anyway,
-  // so they were doing nothing except making CORS fragile.
   async function convertUrlToFile(url, name) {
     try {
       const response = await fetch(url, { cache: "no-store" });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status} fetching ${url}`);
-      }
+      if (!response.ok) throw new Error(`HTTP ${response.status} fetching ${url}`);
       const blob = await response.blob();
       const ext = name.split(".").pop();
       const mimeType =
@@ -99,8 +82,6 @@ function PhotoSharePage() {
     }
   }
 
-  // Single fetch attempt — extracted so the auto-retry effect below can
-  // re-trigger it without duplicating the body.
   const fetchData = async () => {
     setLoadError(false);
     setErrorDetail("");
@@ -111,7 +92,6 @@ function PhotoSharePage() {
         shortUUID
       );
 
-      // Build thumbnail lookup keyed by base name (extension-agnostic)
       const thumbMap = {};
       for (const s of source) {
         if (s.name.endsWith("_thumb.jpg")) {
@@ -120,22 +100,15 @@ function PhotoSharePage() {
         }
       }
 
-      // Display items exclude thumbnail files
       const displaySource = source.filter((s) => !s.name.endsWith("_thumb.jpg"));
-
-      // Image-only fallback — never a video URL (Safari won't render it as <img>)
-      const imageItem = displaySource.find((s) =>
-        /\.(jpe?g|png|webp)$/i.test(s.name)
-      );
+      const imageItem = displaySource.find((s) => /\.(jpe?g|png|webp)$/i.test(s.name));
       const imageOnlyFallback = imageItem?.path || "";
 
       const items = displaySource.map((item) => {
         const type = getMediaType(item.name);
         const baseName = item.name.replace(/\.[^.]+$/, "");
         const thumbnail =
-          type === "video"
-            ? thumbMap[baseName] || imageOnlyFallback
-            : item.path;
+          type === "video" ? thumbMap[baseName] || imageOnlyFallback : item.path;
         return {
           name: item.name,
           path: item.path,
@@ -151,28 +124,25 @@ function PhotoSharePage() {
     } catch (error) {
       console.error("Failed to load media:", error, error?.diagnostics);
       setLoadError(true);
-      // Serialize diagnostics for on-screen debugging
       const diag = Array.isArray(error?.diagnostics)
-        ? error.diagnostics.map((d) =>
-            `#${d.attempt}/${d.via}: ${d.kind}${d.status ? ` [${d.status}]` : ""}${d.contentType ? ` ${d.contentType}` : ""}${d.message ? ` — ${d.message}` : ""}`
-          ).join("\n")
-        : (error?.message || "Unknown error");
+        ? error.diagnostics
+            .map(
+              (d) =>
+                `#${d.attempt}/${d.via}: ${d.kind}${d.status ? ` [${d.status}]` : ""}${d.contentType ? ` ${d.contentType}` : ""}${d.message ? ` — ${d.message}` : ""}`
+            )
+            .join("\n")
+        : error?.message || "Unknown error";
       setErrorDetail(diag);
       setLoading(false);
     }
   };
 
-  // Initial fetch on mount / shortUUID change.
   useEffect(() => {
     setAutoRetryCount(0);
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shortUUID]);
 
-  // Auto-retry while we're in a "probably still uploading" state.
-  // Triggers when the previous fetch failed (loadError) AND we haven't
-  // exhausted the retry budget. Counts down visibly so the guest knows
-  // the page is doing something rather than silently sitting on an error.
   useEffect(() => {
     if (!loadError || autoRetryCount >= MAX_AUTO_RETRIES) return;
     setRetryCountdown(RETRY_INTERVAL_SEC);
@@ -191,31 +161,61 @@ function PhotoSharePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadError, autoRetryCount]);
 
-  const handleOpen = (item) => setSelectedMedia(item);
-  const handleClose = () => {
-    setSelectedMedia(null);
-    setShowPopup(false);
-  };
+  // Once the media list arrives, snap the default selection to whatever
+  // is actually available — prefer LIVE PHOTO, else fall back in order.
+  useEffect(() => {
+    if (!mediaItems.length) return;
+    const availableKeys = TYPES
+      .filter((t) => mediaItems.some((m) => m.label === t.mediaLabel))
+      .map((t) => t.key);
+    if (availableKeys.length && !availableKeys.includes(selectedType)) {
+      setSelectedType(availableKeys[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mediaItems]);
 
-  // Download file on demand (lazy — not pre-downloaded)
+  // All items of the selected type (a print session can produce 2+ frames).
+  const currentItems = useMemo(() => {
+    const mediaLabel = TYPES.find((t) => t.key === selectedType)?.mediaLabel;
+    return mediaItems.filter((m) => m.label === mediaLabel);
+  }, [mediaItems, selectedType]);
+
+  // Which frame set is showing. Deliberately NOT reset when the user switches
+  // type (PRINT/LIVE PHOTO/GIF) or when items update (e.g. a file finishes
+  // caching after download) — set 2 stays selected until the user clicks
+  // set 1 themselves. Reset only when a new share session (shortUUID) loads.
+  const [mediaIndex, setMediaIndex] = useState(0);
+  useEffect(() => {
+    setMediaIndex(0);
+  }, [shortUUID]);
+
+  // Clamp for types that have fewer frames than the selected index —
+  // display-wise it falls back to that type's last frame without losing
+  // the user's chosen set for types that do have it.
+  const safeIndex = Math.min(mediaIndex, Math.max(currentItems.length - 1, 0));
+  const currentMedia = currentItems[safeIndex] || null;
+
+
+  const availableKeys = useMemo(
+    () => TYPES.filter((t) => mediaItems.some((m) => m.label === t.mediaLabel)).map((t) => t.key),
+    [mediaItems]
+  );
+
   const getFile = async (item) => {
+    if (!item) return null;
     if (item.file) return item.file;
     const file = await convertUrlToFile(item.path, item.name);
-    // Cache it for next time
-    setMediaItems((prev) => prev.map((m) => m.name === item.name ? { ...m, file } : m));
+    setMediaItems((prev) => prev.map((m) => (m.name === item.name ? { ...m, file } : m)));
     return file;
   };
 
+  // Labeled DOWNLOAD, but identical to the old share button: opens the
+  // native share sheet with the file. No download fallback — browsers
+  // without Web Share (most desktop) simply do nothing, same as before.
   const handleDownload = async () => {
-    if (!selectedMedia) return;
-    const file = await getFile(selectedMedia);
-    if (file) saveAs(file, selectedMedia.name);
-  };
-
-  const handleShare = async () => {
-    if (!selectedMedia || !navigator.share) return;
+    if (!currentMedia || !navigator.share) return;
     try {
-      const file = await getFile(selectedMedia);
+      const file = await getFile(currentMedia);
       if (file) await navigator.share({ files: [file] });
     } catch (err) {
       console.error("Share failed:", err);
@@ -225,324 +225,483 @@ function PhotoSharePage() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline enableColorScheme />
+      {/*
+        Layout goal: whole page must fit in a single viewport, no scrollbars
+        at any device size, with the proportions of every element preserved.
+
+        Strategy:
+          • Container is height: 100dvh + overflow: hidden. `dvh` handles
+            mobile browser chrome (Safari URL bar) so we never overflow.
+          • Fixed-height elements (logo, title, pills, buttons, footer) use
+            clamp() based on vmin so they scale evenly with whichever axis
+            is smaller — this keeps proportions on portrait phones AND
+            landscape / desktop without distortion.
+          • The media preview is the ONLY flexible piece — flex:1 min-height:0
+            plus object-fit: contain lets the image/video fill whatever
+            vertical space is left over while keeping its own aspect ratio.
+          • Body/html get overflow:hidden to guarantee no scrollbar at all.
+      */}
+      <GlobalStyles styles={{ "html, body, #root": { overflow: "hidden", margin: 0, height: "100%" } }} />
       <Container
         maxWidth={false}
         disableGutters
         component="main"
-        sx={{ justifyContent: "center", alignItems: "center", textAlign: "center" }}
+        sx={{
+          height: "100dvh",
+          maxHeight: "100dvh",
+          width: "100vw",
+          maxWidth: "100vw",
+          overflow: "hidden",
+          bgcolor: "#000",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          textAlign: "center",
+          px: "clamp(12px, 3vmin, 32px)",
+          py: "clamp(12px, 2.5vmin, 28px)",
+          boxSizing: "border-box",
+        }}
       >
-        {/* Header */}
-        <Grid container justifyContent="center" alignItems="center" direction="column" sx={{ pt: "40px" }}>
-          <Grid item size={{ xs: 10, md: 8 }}>
-            <img src={src} style={{ maxWidth: "100%", maxHeight: "50%", display: "block", margin: "0 auto" }} alt="Logo" />
-          </Grid>
-          <Grid item size={{ xs: 10, md: 12 }}>
-            <Typography className="text-dowload-photo-share">DOWNLOAD* Your file</Typography>
-          </Grid>
-        </Grid>
-
-        {/* Media grid */}
-        <Grid container justifyContent="center" alignItems="center" direction="column" sx={{ width: "100%" }}>
-          {loading ? (
-            <ClipLoader color="#123abc" loading={loading} size={100} className="all-element-center" />
-          ) : loadError || mediaItems.length === 0 ? (
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                py: "8vh",
-                px: "4vw",
-                textAlign: "center",
-              }}
-            >
-              {/*
-                Two distinct states:
-                  • While auto-retry budget remains → "still uploading" copy
-                    with countdown. Most guests scan within seconds of the QR
-                    appearing on the kiosk, which is often before the kiosk's
-                    background upload has completed. This window is the common
-                    case, not an error — be reassuring, not apologetic.
-                  • Once auto-retry budget is exhausted → fall back to the
-                    original "link expired" copy. Two minutes is well past
-                    the longest realistic upload time on a slow uplink.
-              */}
-              {autoRetryCount < MAX_AUTO_RETRIES ? (
-                <>
-                  <ClipLoader color="#F4F0D3" loading={true} size={56} className="all-element-center" />
-                  <Typography
-                    color="#F4F0D3"
-                    fontFamily="Boyrun"
-                    fontSize="1.6em"
-                    fontWeight={600}
-                    sx={{ mt: "16px", mb: "8px" }}
-                  >
-                    Just a moment
-                  </Typography>
-                  <Typography color="#F4F0D3" fontFamily="Boyrun" fontSize="1em" sx={{ opacity: 0.85, mb: "6px" }}>
-                    Your photos are still being uploaded.
-                  </Typography>
-                  <Typography color="#F4F0D3" fontFamily="Boyrun" fontSize="1em" sx={{ opacity: 0.85, mb: "20px" }}>
-                    This usually takes 10–30 seconds. We'll check again in {retryCountdown}s.
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    onClick={() => {
-                      setAutoRetryCount((n) => n + 1);
-                      setLoading(true);
-                      fetchData();
-                    }}
-                    sx={{ borderRadius: "50px", px: 4 }}
-                  >
-                    <Typography color="black" fontSize="1rem" fontWeight={600} textTransform="none">
-                      Check Now
-                    </Typography>
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Typography
-                    color="#F4F0D3"
-                    fontFamily="Boyrun"
-                    fontSize="1.6em"
-                    fontWeight={600}
-                    sx={{ mb: "8px" }}
-                  >
-                    Media not found
-                  </Typography>
-                  <Typography color="#F4F0D3" fontFamily="Boyrun" fontSize="1em" sx={{ opacity: 0.8, mb: "20px" }}>
-                    This share link may have expired or is no longer available.
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    onClick={() => window.location.reload()}
-                    sx={{ borderRadius: "50px", px: 4 }}
-                  >
-                    <Typography color="black" fontSize="1rem" fontWeight={600} textTransform="none">
-                      Try Again
-                    </Typography>
-                  </Button>
-                  {errorDetail && (
-                    <Box
-                      component="pre"
-                      sx={{
-                        mt: "20px",
-                        maxWidth: "90vw",
-                        fontSize: "0.7rem",
-                        color: "#F4F0D3",
-                        opacity: 0.6,
-                        textAlign: "left",
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
-                      }}
-                    >
-                      {errorDetail}
-                    </Box>
-                  )}
-                </>
-              )}
-            </Box>
-          ) : (
-            <Grid item size={{ xs: 12, md: 12 }} container spacing={2} className="all-element-center">
-              {mediaItems.map((item, idx) => (
-                <Box
-                  key={idx}
-                  sx={{
-                    position: "relative",
-                    maxWidth: mediaItems.length <= 2 ? "44vw" : "30vw",
-                    height: "30vh",
-                    borderRadius: "10px",
-                    border: "12px solid #F4F0D3",
-                  }}
-                >
-                  {/* Thumbnail — image-only, with exponential retry on Safari fetch failures */}
-                  <img
-                    src={item.thumbnail}
-                    alt={item.label}
-                    loading="lazy"
-                    decoding="async"
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    onError={(e) => {
-                      const el = e.currentTarget;
-                      const attempt = Number(el.dataset.retry || 0);
-                      const backoff = [500, 1500, 3500];
-                      if (attempt < backoff.length && item.thumbnail) {
-                        el.dataset.retry = String(attempt + 1);
-                        setTimeout(() => {
-                          const sep = item.thumbnail.includes("?") ? "&" : "?";
-                          el.src = `${item.thumbnail}${sep}r=${Date.now()}.${attempt + 1}`;
-                        }, backoff[attempt]);
-                      }
-                    }}
-                  />
-
-                  {/* Click overlay */}
-                  <Box
-                    onClick={() => handleOpen(item)}
-                    sx={{
-                      position: "absolute",
-                      top: 0, left: 0, width: "100%", height: "100%",
-                      backgroundColor: "rgba(255, 255, 255, 0.5)",
-                      backgroundImage: `url(${item.type === "video" ? VDO : icon})`,
-                      backgroundRepeat: "no-repeat",
-                      backgroundPosition: "center",
-                      backgroundSize: "32%",
-                      cursor: "pointer",
-                    }}
-                  />
-
-                </Box>
-              ))}
-            </Grid>
-          )}
-        </Grid>
-
-        {/* QR popup */}
-        {showPopup && (
-          <div
-            className="overlay-box-Qr"
-            onClick={handleClose}
-            style={{
-              position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
-              backgroundColor: "rgba(0, 0, 0, 0.2)", backdropFilter: "blur(6px)",
-              WebkitBackdropFilter: "blur(6px)", zIndex: 99,
-              display: "flex", justifyContent: "center", alignItems: "center",
+        {/* Inner column: caps width for desktop, flex column so preview grows. */}
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: { xs: "min(480px, 92vw)", sm: "min(1000px, 94vw)" },
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "clamp(14px, 3vmin, 28px)",
+          }}
+        >
+          {/* Logo — image imported from src/assets/captures-icon.svg; replace
+              that file to change the icon (hard-reload after swapping).
+              Desktop adds the CAPTURES wordmark next to the icon. */}
+          <Box
+            sx={{
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              // Mobile: double spacing (gap + this mb = 2x the normal gap).
+              // PC: match the spacing below the title (1.2 units total),
+              // so the title sits evenly between logo and content.
+              mb: { xs: "clamp(14px, 3vmin, 28px)", sm: "clamp(3px, 0.6vmin, 6px)" },
             }}
           >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="popUp-Qr"
-              style={{
-                position: "relative", display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "center",
-                borderRadius: "20px", background: "rgba(255, 255, 255, 0.1)",
+            <Box
+              component="img"
+              src={capturesIcon}
+              alt=""
+              sx={{
+                width: { xs: "clamp(48px, 9vmin, 84px)", sm: "clamp(36px, 4.8vmin, 48px)" },
+                height: { xs: "clamp(48px, 9vmin, 84px)", sm: "clamp(36px, 4.8vmin, 48px)" },
+                display: "block",
+                objectFit: "contain",
+              }}
+            />
+            <Typography
+              sx={{
+                display: { xs: "none", sm: "block" },
+                color: ACCENT,
+                fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+                fontWeight: 800,
+                fontSize: "clamp(1rem, 2.2vmin, 1.35rem)",
+                letterSpacing: "0.08em",
               }}
             >
-              <Button
-                className="close-popup-button"
-                onClick={() => setShowPopup(false)}
-                style={{ position: "absolute", top: "-28px", right: "-10px", background: "transparent", paddingTop: "10px" }}
-              >
-                X
-              </Button>
-              <QRCode
-                style={{ height: "80%", maxWidth: "72%", width: "100%", paddingTop: "18px", paddingBottom: "20px" }}
-                value={window.location.href}
-              />
-              <Typography color="#F4F0D3" fontFamily="Boyrun" fontSize="1.3em" textAlign="center" lineHeight="16px" paddingBottom="10px">
-                Scan this QR code <br /> to get an image file
-              </Typography>
-            </div>
-          </div>
-        )}
+              CAPTURES
+            </Typography>
+          </Box>
 
-        {/* Media modal */}
-        <Box className="all-element-center" sx={{ pb: "8vh" }} onClick={handleClose}>
-          <Modal open={!!selectedMedia} closeAfterTransition BackdropComponent={Backdrop}>
-            <Fade in={!!selectedMedia}>
-              <Box sx={{ display: "flex", flexDirection: "row", height: "100vh", width: "100vw", position: "fixed" }}>
-                <Box sx={{
-                  flexShrink: 0, display: "flex", flexDirection: "column",
-                  alignItems: "center", justifyContent: "center",
-                  backgroundColor: "rgba(0, 0, 0, 0.3)", backdropFilter: "blur(6px)",
-                  position: "relative", width: "100vw", height: "100vh", overflow: "hidden",
-                }}>
-                  <div style={{
-                    display: "flex", flexDirection: "column", alignItems: "center",
-                    justifyContent: "center", maxWidth: "100vw", margin: "0 auto", position: "relative",
-                  }}>
-                    <Button className="close-popup-button" onClick={handleClose}
-                      sx={{ position: "absolute", top: -50, left: 40, zIndex: 1000 }}>
-                      X
-                    </Button>
-
-                    {selectedMedia?.type === "video" ? (
-                      // Native <video> instead of ReactPlayer:
-                      // - ReactPlayer v2 hard-codes width/height props (default
-                      //   640x360); `style` can't override those, so on PC the
-                      //   player rendered off-screen or cropped.
-                      // - `autoPlay` MUST pair with `muted` on desktop browsers,
-                      //   otherwise the autoplay promise is rejected and the
-                      //   video appears broken.
-                      // - `playsInline` keeps iOS from going full-screen.
-                      <video
-                        src={selectedMedia.path}
-                        controls
-                        loop
-                        autoPlay
-                        muted
-                        playsInline
-                        preload="metadata"
-                        style={{
-                          maxHeight: "80vh",
-                          maxWidth: "72vw",
-                          width: "auto",
-                          height: "auto",
-                          position: "relative",
-                          zIndex: 99,
-                          marginBottom: "20px",
-                          background: "black",
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        onError={(e) => console.error("Video error:", e?.currentTarget?.error)}
-                      />
-                    ) : selectedMedia?.type === "image" ? (
-                      <img
-                        src={selectedMedia.path}
-                        alt="Selected"
-                        decoding="async"
-                        style={{ maxHeight: "80vh", maxWidth: "68%" }}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    ) : null}
-
-                    {/* Download + Share buttons */}
-                    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", pt: "40px" }}
-                      onClick={(e) => e.stopPropagation()}>
-                      <Button className="save-popup-button"
-                        sx={{ bgcolor: "white", width: 160, height: 40, borderRadius: "50px", mr: "10px" }}
-                        onClick={handleDownload}>
-                        <img src={save} alt="Download" style={{ maxHeight: "60%", maxWidth: "60%" }} />
-                        <Typography color="black" fontSize="1rem" textAlign="center" pl="8px" fontWeight={600}>
-                          DOWNLOAD
-                        </Typography>
-                      </Button>
-                      <Button className="share-popup-button"
-                        sx={{ bgcolor: "white", width: 160, height: 40, borderRadius: "50px", ml: "10px" }}
-                        onClick={handleShare}>
-                        <img src={share} alt="Share" style={{ maxHeight: "60%", maxWidth: "60%" }} />
-                        <Typography color="black" fontSize="1rem" textAlign="center" pl="10px" fontWeight={600}>
-                          SHARE
-                        </Typography>
-                      </Button>
-                    </Box>
-                  </div>
-                </Box>
-              </Box>
-            </Fade>
-          </Modal>
-        </Box>
-
-        {/* QR button */}
-        <Grid container justifyContent="center" alignItems="center">
-          <Grid item size={{ xs: 8, md: 4 }} className="all-element-center">
-            <Button variant="contained" className="button-QR-element color-button all-element-center"
-              onClick={() => setShowPopup(true)}>
-              <img src={qrIcon} style={{ maxHeight: "30px", marginRight: "5px" }} />
-              <Typography color="black" fontSize="1.2rem" fontWeight={600} textTransform="none">
-                Show QR
-              </Typography>
-            </Button>
-          </Grid>
-        </Grid>
-
-        {/* Footer */}
-        <Box sx={{ position: "fixed", bottom: 0, width: "100%", display: "flex", justifyContent: "center", alignItems: "center", p: "32px" }}>
-          <Typography color="#F4F0D3" fontFamily="Boyrun" fontSize="1.2em" fontWeight={200} textAlign="center">
-            POWERED BY SIXSHEET
+          {/* Title */}
+          <Typography
+            sx={{
+              flexShrink: 0,
+              color: "#fff",
+              fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+              fontWeight: 700,
+              fontSize: "clamp(1.05rem, 3.2vmin, 1.9rem)",
+              letterSpacing: "-0.01em",
+              lineHeight: 1.2,
+              // Title → preview spacing is 1.2x the normal gap
+              // (was 1.5x, then reduced 20%).
+              mb: "clamp(3px, 0.6vmin, 6px)",
+            }}
+          >
+            Download Your Files
           </Typography>
+
+          {/* Content area — single column on mobile; on desktop a two-column
+              row: media + buttons on the left, an always-visible QR on the right. */}
+          <Box
+            sx={{
+              flex: "0 1 auto",
+              minHeight: 0,
+              width: "100%",
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              alignItems: "center",
+              justifyContent: "center",
+              gap: { xs: "clamp(14px, 3vmin, 28px)", sm: "clamp(48px, 10vmin, 140px)" },
+            }}
+          >
+          {/* Left column: preview + pills + download */}
+          <Box
+            sx={{
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              width: { xs: "100%", sm: "auto" },
+            }}
+          >
+          {/* Media preview — sized to content (capped at ~70% of what it could
+              fill) so the buttons below sit right under it; the leftover space
+              collects above the footer via its mt:auto. Still shrinks first if
+              the viewport is short, and the media keeps its own aspect ratio. */}
+          <Box
+            sx={{
+              flex: "0 1 auto",
+              minHeight: 0,
+              width: { xs: "77%", sm: "auto" },
+              // PC preview scales fluidly with the viewport (like mobile) —
+              // no fixed px cap; the media itself caps its height in dvh so
+              // portrait strips scale down whole, never cropped.
+              maxWidth: { sm: "32.5vw" },
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {loading ? (
+              <ClipLoader color={ACCENT} loading size={48} />
+            ) : loadError || !currentMedia ? (
+              <Box sx={{ px: 2, textAlign: "center" }}>
+                {autoRetryCount < MAX_AUTO_RETRIES ? (
+                  <>
+                    <ClipLoader color={ACCENT} loading size={36} />
+                    <Typography sx={{ color: "#fff", fontSize: "clamp(0.75rem, 1.8vmin, 1rem)", mt: "8px", opacity: 0.9 }}>
+                      Your photos are still being uploaded.
+                    </Typography>
+                    <Typography sx={{ color: "#fff", fontSize: "clamp(0.7rem, 1.6vmin, 0.9rem)", opacity: 0.65, mt: "4px" }}>
+                      Retrying in {retryCountdown}s.
+                    </Typography>
+                  </>
+                ) : (
+                  <>
+                    <Typography sx={{ color: "#fff", fontSize: "clamp(0.85rem, 2vmin, 1.05rem)", fontWeight: 600 }}>
+                      Media not found
+                    </Typography>
+                    <Typography sx={{ color: "#fff", fontSize: "clamp(0.7rem, 1.6vmin, 0.9rem)", opacity: 0.7, mt: "6px" }}>
+                      This share link may have expired.
+                    </Typography>
+                  </>
+                )}
+              </Box>
+            ) : (
+              // Relative wrapper so the frame counter and prev/next arrows
+              // can sit on top of the media. Swipe left/right to change frame.
+              <Box sx={{ position: "relative", display: "flex" }}>
+                {currentMedia.type === "video" ? (
+                  <Box
+                    component="video"
+                    key={currentMedia.path}
+                    src={currentMedia.path}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    sx={{
+                      // The media caps its own height in viewport units (not a %
+                      // of an indefinite flex parent) so a portrait strip scales
+                      // down whole instead of getting cropped by overflow.
+                      maxWidth: "100%",
+                      maxHeight: { xs: "53.9dvh", sm: "47.9dvh" },
+                      width: "auto",
+                      height: "auto",
+                      display: "block",
+                      objectFit: "contain",
+                    }}
+                  />
+                ) : (
+                  <Box
+                    component="img"
+                    src={currentMedia.path}
+                    alt={currentMedia.label}
+                    loading="lazy"
+                    decoding="async"
+                    sx={{
+                      maxWidth: "100%",
+                      maxHeight: { xs: "53.9dvh", sm: "47.9dvh" },
+                      width: "auto",
+                      height: "auto",
+                      display: "block",
+                      objectFit: "contain",
+                    }}
+                  />
+                )}
+
+                {/* Frame counter — top-left (1/2, 2/2; 1/1 when single) */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: "8px",
+                    left: "8px",
+                    bgcolor: "rgba(0,0,0,0.65)",
+                    color: "#fff",
+                    fontWeight: 700,
+                    fontSize: "clamp(0.7rem, 1.6vmin, 0.85rem)",
+                    fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+                    px: "10px",
+                    py: "3px",
+                    borderRadius: "999px",
+                    pointerEvents: "none",
+                  }}
+                >
+                  {safeIndex + 1}/{currentItems.length}
+                </Box>
+
+              </Box>
+            )}
+          </Box>
+
+          {/* Frame toggle — switches between frame set 1 / 2 when the
+              selected type has more than one file */}
+          {currentItems.length > 1 && (
+            <Box
+              sx={{
+                flexShrink: 0,
+                display: "flex",
+                gap: "clamp(6px, 1.2vmin, 12px)",
+                justifyContent: "center",
+                mt: "clamp(8px, 1.6vmin, 14px)",
+              }}
+            >
+              {currentItems.map((_, i) => (
+                <Button
+                  key={i}
+                  onClick={() => setMediaIndex(i)}
+                  disableRipple
+                  sx={{
+                    minWidth: 0,
+                    width: "clamp(30px, 4.8vmin, 40px)",
+                    height: "clamp(30px, 4.8vmin, 40px)",
+                    borderRadius: "50%",
+                    bgcolor: safeIndex === i ? ACCENT : "#fff",
+                    color: "#000",
+                    fontWeight: 700,
+                    fontSize: "clamp(0.7rem, 1.6vmin, 0.9rem)",
+                    fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+                    boxShadow: "none",
+                    "&:hover": { bgcolor: safeIndex === i ? ACCENT : "#f0f0f0", boxShadow: "none" },
+                  }}
+                >
+                  {i + 1}
+                </Button>
+              ))}
+            </Box>
+          )}
+
+          {/* Type filter pills */}
+          <Box
+            sx={{
+              flexShrink: 0,
+              display: "flex",
+              gap: "clamp(6px, 1.2vmin, 12px)",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              // Mobile: match the title → preview spacing (outer column gap
+              // + 0.2 unit = 1.2x gap) so the space above and below the image
+              // is equal — the left column has no flex gap of its own, so the
+              // full 1.2 units must come from this margin. PC keeps 1.5x.
+              mt: { xs: "clamp(22.4px, 4.75vmin, 44.9px)", sm: "clamp(10.2px, 2.18vmin, 20.3px)" },
+            }}
+          >
+            {TYPES.map((t) => {
+              const active = selectedType === t.key;
+              const enabled = availableKeys.length === 0 || availableKeys.includes(t.key);
+              return (
+                <Button
+                  key={t.key}
+                  onClick={() => enabled && setSelectedType(t.key)}
+                  disableRipple
+                  sx={{
+                    minWidth: 0,
+                    px: "clamp(14px, 2.6vmin, 26px)",
+                    height: "clamp(28px, 4.5vmin, 40px)",
+                    borderRadius: "999px",
+                    bgcolor: active ? ACCENT : "#fff",
+                    color: "#000",
+                    fontWeight: 700,
+                    fontSize: "clamp(0.65rem, 1.5vmin, 0.85rem)",
+                    letterSpacing: "0.04em",
+                    fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+                    textTransform: "none",
+                    boxShadow: "none",
+                    opacity: enabled ? 1 : 0.35,
+                    cursor: enabled ? "pointer" : "not-allowed",
+                    "&:hover": { bgcolor: active ? ACCENT : "#f0f0f0", boxShadow: "none" },
+                  }}
+                >
+                  {t.label}
+                </Button>
+              );
+            })}
+          </Box>
+
+          {/* Download button */}
+          <Button
+            onClick={handleDownload}
+            disabled={!currentMedia}
+            disableRipple
+            sx={{
+              flexShrink: 0,
+              // Mobile: same 1.2-unit spacing as around the image (the left
+              // column has no flex gap, so the margin carries it all).
+              mt: { xs: "clamp(22.4px, 4.75vmin, 44.9px)", sm: "clamp(10.2px, 2.18vmin, 20.3px)" },
+              width: "100%",
+              maxWidth: "clamp(150px, 28.7vmin, 218px)",
+              height: { xs: "clamp(40px, 6.6vmin, 60px)", sm: "clamp(36px, 6vmin, 55px)" },
+              borderRadius: "clamp(3px, 0.6vmin, 6px)",
+              bgcolor: ACCENT,
+              color: "#000",
+              fontWeight: 800,
+              fontSize: "clamp(0.8rem, 1.9vmin, 1.05rem)",
+              letterSpacing: "0.06em",
+              fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+              textTransform: "none",
+              boxShadow: "none",
+              "&:hover": { bgcolor: ACCENT, boxShadow: "none", filter: "brightness(0.95)" },
+              "&.Mui-disabled": { bgcolor: ACCENT, color: "#000", opacity: 0.4 },
+            }}
+          >
+            DOWNLOAD
+            <Box component="span" sx={{ ml: "10px", fontSize: "clamp(0.95rem, 2.2vmin, 1.3rem)", lineHeight: 1 }}>→</Box>
+          </Button>
+          </Box>
+
+          {/* Right column (desktop only): always-visible QR */}
+          <Box
+            sx={{
+              display: { xs: "none", sm: "flex" },
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "clamp(14px, 2.5vmin, 24px)",
+            }}
+          >
+            <Box
+              sx={{
+                bgcolor: "#fff",
+                p: "clamp(10px, 1.6vmin, 16px)",
+                borderRadius: "4px",
+                display: "flex",
+              }}
+            >
+              <QRCode
+                value={window.location.href}
+                style={{ width: "clamp(150px, 24vmin, 220px)", height: "auto" }}
+              />
+            </Box>
+            <Typography
+              sx={{
+                color: "#fff",
+                fontWeight: 600,
+                fontSize: "clamp(0.85rem, 1.9vmin, 1.1rem)",
+                fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+                lineHeight: 1.4,
+              }}
+            >
+              Scan to download
+              <br />
+              or print
+            </Typography>
+          </Box>
+          </Box>
+
+          {/* Show QR — mobile only; desktop shows the QR inline instead */}
+          <Button
+            onClick={() => setShowQr(true)}
+            disableRipple
+            sx={{
+              display: { xs: "inline-flex", sm: "none" },
+              flexShrink: 0,
+              // Mobile-only element. It sits in the outer column, which already
+              // adds one gap unit — this mt tops it up to the same 1.2 units
+              // used everywhere else in the button zone.
+              mt: "clamp(3px, 0.6vmin, 6px)",
+              bgcolor: "transparent",
+              color: "#fff",
+              textTransform: "none",
+              fontWeight: 600,
+              fontSize: "clamp(0.75rem, 1.7vmin, 0.95rem)",
+              fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+              gap: "8px",
+              "&:hover": { bgcolor: "transparent" },
+            }}
+          >
+            <Box sx={{ display: "flex", width: "clamp(16px, 2.6vmin, 24px)", height: "clamp(16px, 2.6vmin, 24px)" }}>
+              <QrGlyph size="100%" />
+            </Box>
+            Show QR
+          </Button>
+
+          {/* Footer */}
+          <Box sx={{ flexShrink: 0, mt: "auto" }}>
+            <Typography
+              sx={{
+                color: "rgba(255,255,255,0.7)",
+                fontSize: "clamp(0.6rem, 1.4vmin, 0.78rem)",
+                letterSpacing: "0.08em",
+                fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+              }}
+            >
+              © SIXSHEET GROUP. ALL RIGHT RESERVED
+            </Typography>
+          </Box>
         </Box>
+
+        {/* QR popup (mobile) — bare QR over a dimmed page, caption below,
+            same look as the PC inline QR panel. Tap anywhere to close. */}
+        {showQr && (
+          <Box
+            onClick={() => setShowQr(false)}
+            sx={{
+              position: "fixed",
+              inset: 0,
+              bgcolor: "rgba(0,0,0,0.75)",
+              zIndex: 1000,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "18px",
+              p: "20px",
+            }}
+          >
+            <Box sx={{ bgcolor: "#fff", p: "12px", display: "flex" }}>
+              <QRCode
+                value={window.location.href}
+                style={{ width: "min(60vw, 240px)", height: "auto" }}
+              />
+            </Box>
+            <Typography
+              sx={{
+                color: "#fff",
+                fontWeight: 600,
+                fontSize: "1.15rem",
+                textAlign: "center",
+                lineHeight: 1.4,
+                fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+              }}
+            >
+              Scan to download
+              <br />
+              or print
+            </Typography>
+          </Box>
+        )}
       </Container>
     </ThemeProvider>
   );

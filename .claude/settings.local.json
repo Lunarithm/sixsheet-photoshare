@@ -10,7 +10,11 @@
       "Bash(git fetch *)",
       "WebSearch",
       "WebFetch(domain:github.com)",
-      "PowerShell(npm install axios@1.15.2 --save)"
+      "PowerShell(npm install axios@1.15.2 --save)",
+      "Bash(git -C C:/Project/sixsheet-photoshare log --all --oneline -- src/Pages/VisaSharePage.jsx)",
+      "Bash(git -C C:/Project/sixsheet-photoshare branch -a --contains 798b2bf)",
+      "Bash(git -C C:/Project/sixsheet-photoshare ls-files)",
+      "Bash(git commit *)"
     ],
     "additionalDirectories": [
       "C:\\Project\\sixsheet.apihub"

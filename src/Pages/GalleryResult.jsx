@@ -119,6 +119,12 @@ export default function MachineResultsPage() {
 
   const offset = useMemo(() => page * limit, [page, limit]);
 
+  const urlPrefix = useMemo(() => {
+    const raw = (searchParams.get("prefix") || "media").trim();
+    const cleaned = raw.replace(/^\/+|\/+$/g, "");
+    return cleaned || "media";
+  }, [searchParams]);
+
   async function fetchData() {
     setLoading(true);
     setError("");
@@ -334,8 +340,8 @@ export default function MachineResultsPage() {
                     ? new Date(r.createdAt).toLocaleString()
                     : "-";
                   const url = ["21", "22", "23"].includes(mNo)
-                    ? `https://photoshare-laos01.sixsheet.me/media/${r.shortUUID}`
-                    : `${import.meta.env.VITE_PHOTOSHARE}/media/${r.shortUUID}`;
+                    ? `https://photoshare-laos01.sixsheet.me/${urlPrefix}/${r.shortUUID}`
+                    : `${import.meta.env.VITE_PHOTOSHARE}/${urlPrefix}/${r.shortUUID}`;
                   console.log(mNo, url);
                   return (
                     <Grid item xs={12} sm={6} md={4} lg={3} key={r.uuid}>

@@ -14,6 +14,8 @@ import SelectPage from "./Pages/pageSelection.jsx";
 import MachinesPage from "./Pages/MachinesPage.jsx";
 import PhotoSharePage from "./Pages/PhotoSharePage.jsx";
 import VisaSharePage from "./Pages/VisaSharePage.jsx";
+import GrammySharePage from "./Pages/GrammySharePage.jsx";
+import GrammyExclusiveVideo from "./Pages/GrammyExclusiveVideo.jsx";
 
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
@@ -29,6 +31,14 @@ const router = createBrowserRouter([
   {
     path: "/visa/:shortUUID",
     element: <VisaSharePage />,
+  },
+  {
+    path: "/grammy/:shortUUID",
+    element: <GrammySharePage />,
+  },
+  {
+    path: "/grammy-exclusive-video",
+    element: <GrammyExclusiveVideo />,
   },
   {
     path: "/admin",

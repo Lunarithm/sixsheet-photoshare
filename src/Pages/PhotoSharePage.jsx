@@ -14,6 +14,9 @@ import "../assets/css/photoShare.css";
 import capturesIcon from "../assets/iconCap.png";
 
 const ACCENT = "#D4FF3D";
+// QR caption ("Scan to download / or print") — Neulis Neue per the design.
+// Face is declared in src/assets/font.css.
+const QR_CAPTION_FONT = '"Neulis Neue", "Inter", "Helvetica Neue", Arial, sans-serif';
 const TYPES = [
   { key: "PRINT", label: "PRINT", mediaLabel: "Photo" },
   { key: "LIVE_PHOTO", label: "LIVE PHOTO", mediaLabel: "Video" },
@@ -609,7 +612,7 @@ function PhotoSharePage() {
                 color: "#fff",
                 fontWeight: 600,
                 fontSize: "clamp(0.85rem, 1.9vmin, 1.1rem)",
-                fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+                fontFamily: QR_CAPTION_FONT,
                 lineHeight: 1.4,
               }}
             >
@@ -693,7 +696,7 @@ function PhotoSharePage() {
                 fontSize: "1.15rem",
                 textAlign: "center",
                 lineHeight: 1.4,
-                fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+                fontFamily: QR_CAPTION_FONT,
               }}
             >
               Scan to download

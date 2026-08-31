@@ -69,3 +69,14 @@
     font-family: 'inter';
     src: url('../src/assets/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
 }
+
+/* Neulis Neue — used by the PhotoShare QR caption ("Scan to download / or print").
+   No web font file is in the repo yet, so this resolves only where the font is
+   installed locally. Drop NeulisNeue-SemiBold.woff2 into ./fonts/ and add the
+   url() source below to make it work for every visitor. */
+@font-face {
+    font-family: 'Neulis Neue';
+    src: local('Neulis Neue'), local('NeulisNeue-SemiBold'), local('NeulisNeue-Regular');
+    /* url('./fonts/NeulisNeue-SemiBold.woff2') format('woff2'); */
+    font-display: swap;
+}

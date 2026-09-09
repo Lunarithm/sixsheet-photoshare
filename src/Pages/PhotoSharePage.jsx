@@ -17,6 +17,39 @@ const ACCENT = "#D4FF3D";
 // QR caption ("Scan to download / or print") — Neulis Neue per the design.
 // Face is declared in src/assets/font.css.
 const QR_CAPTION_FONT = '"Neulis Neue", "Inter", "Helvetica Neue", Arial, sans-serif';
+// Shared style for the two recovery buttons in the error states — same
+// language as the DOWNLOAD button, one size down.
+const RETRY_BUTTON_SX = {
+  mt: "clamp(10px, 2vmin, 18px)",
+  px: "clamp(16px, 3vmin, 28px)",
+  height: "clamp(30px, 4.8vmin, 42px)",
+  borderRadius: "clamp(3px, 0.6vmin, 6px)",
+  bgcolor: ACCENT,
+  color: "#000",
+  fontWeight: 800,
+  fontSize: "clamp(0.7rem, 1.6vmin, 0.9rem)",
+  letterSpacing: "0.06em",
+  fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+  textTransform: "none",
+  boxShadow: "none",
+  "&:hover": { bgcolor: ACCENT, boxShadow: "none", filter: "brightness(0.95)" },
+};
+
+// Safari intermittently drops an S3 image fetch on a cold connection. Retry a
+// few times with backoff and a cache-busting param instead of leaving a broken
+// image on screen. Returns an onError handler bound to the source URL.
+const retryImageOnError = (src) => (e) => {
+  const el = e.currentTarget;
+  const attempt = Number(el.dataset.retry || 0);
+  const backoff = [500, 1500, 3500];
+  if (!src || attempt >= backoff.length) return;
+  el.dataset.retry = String(attempt + 1);
+  setTimeout(() => {
+    const sep = src.includes("?") ? "&" : "?";
+    el.src = `${src}${sep}r=${Date.now()}.${attempt + 1}`;
+  }, backoff[attempt]);
+};
+
 const TYPES = [
   { key: "PRINT", label: "PRINT", mediaLabel: "Photo" },
   { key: "LIVE_PHOTO", label: "LIVE PHOTO", mediaLabel: "Video" },
@@ -51,6 +84,8 @@ function PhotoSharePage() {
   const [mediaItems, setMediaItems] = useState([]);
   const [selectedType, setSelectedType] = useState("LIVE_PHOTO");
   const [showQr, setShowQr] = useState(false);
+  // Paths of videos this browser could not play, so the still frame takes over.
+  const [failedVideos, setFailedVideos] = useState({});
   const [autoRetryCount, setAutoRetryCount] = useState(0);
   const [retryCountdown, setRetryCountdown] = useState(0);
   const MAX_AUTO_RETRIES = 12;
@@ -198,11 +233,30 @@ function PhotoSharePage() {
   const safeIndex = Math.min(mediaIndex, Math.max(currentItems.length - 1, 0));
   const currentMedia = currentItems[safeIndex] || null;
 
+  // Still frame for the current item: the file itself for photos, the
+  // *_thumb.jpg poster frame for videos. Never a video URL — Safari will not
+  // render one in an <img>. Empty only when a session ships a video with
+  // neither a thumb nor a photo alongside it.
+  const currentStill = currentMedia
+    ? currentMedia.type === "video"
+      ? currentMedia.thumbnail
+      : currentMedia.path
+    : "";
+  const videoUnplayable = !!currentMedia && !!failedVideos[currentMedia.path];
+
 
   const availableKeys = useMemo(
     () => TYPES.filter((t) => mediaItems.some((m) => m.label === t.mediaLabel)).map((t) => t.key),
     [mediaItems]
   );
+
+  // Manual counterpart to the auto-retry timer. Bumping autoRetryCount also
+  // restarts that timer, so a manual check never leaves two polls in flight.
+  const checkNow = () => {
+    setAutoRetryCount((n) => n + 1);
+    setLoading(true);
+    fetchData();
+  };
 
   const getFile = async (item) => {
     if (!item) return null;
@@ -380,7 +434,18 @@ function PhotoSharePage() {
             {loading ? (
               <ClipLoader color={ACCENT} loading size={48} />
             ) : loadError || !currentMedia ? (
-              <Box sx={{ px: 2, textAlign: "center" }}>
+              <Box
+                sx={{
+                  px: 2,
+                  textAlign: "center",
+                  // The page is one locked viewport with no scrollbar, so this
+                  // state must never grow past the media it stands in for —
+                  // diagnostics scroll inside the box instead of pushing the
+                  // footer off screen.
+                  maxHeight: { xs: "53.9dvh", sm: "47.9dvh" },
+                  overflowY: "auto",
+                }}
+              >
                 {autoRetryCount < MAX_AUTO_RETRIES ? (
                   <>
                     <ClipLoader color={ACCENT} loading size={36} />
@@ -390,6 +455,11 @@ function PhotoSharePage() {
                     <Typography sx={{ color: "#fff", fontSize: "clamp(0.7rem, 1.6vmin, 0.9rem)", opacity: 0.65, mt: "4px" }}>
                       Retrying in {retryCountdown}s.
                     </Typography>
+                    {/* Skips the wait for a guest who knows the upload just
+                        finished — the countdown alone gives them nothing to do. */}
+                    <Button onClick={checkNow} disableRipple sx={RETRY_BUTTON_SX}>
+                      Check Now
+                    </Button>
                   </>
                 ) : (
                   <>
@@ -399,23 +469,57 @@ function PhotoSharePage() {
                     <Typography sx={{ color: "#fff", fontSize: "clamp(0.7rem, 1.6vmin, 0.9rem)", opacity: 0.7, mt: "6px" }}>
                       This share link may have expired.
                     </Typography>
+                    <Button onClick={() => window.location.reload()} disableRipple sx={RETRY_BUTTON_SX}>
+                      Try Again
+                    </Button>
+                    {/* Per-attempt transport/status detail. Deliberately on
+                        screen, not just in the console: this is what a guest can
+                        actually screenshot for us when a link will not load. */}
+                    {errorDetail && (
+                      <Box
+                        component="pre"
+                        sx={{
+                          mt: "clamp(10px, 2vmin, 16px)",
+                          mx: "auto",
+                          maxWidth: "min(90vw, 520px)",
+                          fontSize: "clamp(0.55rem, 1.2vmin, 0.7rem)",
+                          lineHeight: 1.5,
+                          color: "#fff",
+                          opacity: 0.55,
+                          textAlign: "left",
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {errorDetail}
+                      </Box>
+                    )}
                   </>
                 )}
               </Box>
             ) : (
-              // Relative wrapper so the frame counter and prev/next arrows
-              // can sit on top of the media. Swipe left/right to change frame.
+              // Relative wrapper so the frame counter can sit on top of the
+              // media. Frames are switched with the numbered buttons below.
               <Box sx={{ position: "relative", display: "flex" }}>
-                {currentMedia.type === "video" ? (
+                {currentMedia.type === "video" && !videoUnplayable ? (
                   <Box
                     component="video"
                     key={currentMedia.path}
                     src={currentMedia.path}
+                    // Painted until the first frame decodes — and left standing
+                    // on devices whose decoder rejects the file outright (iOS
+                    // refuses H.264 above its 4K / level ceiling, for one),
+                    // which otherwise leaves an empty 300x150 default-sized box.
+                    poster={currentStill || undefined}
                     autoPlay
                     muted
                     loop
                     playsInline
                     preload="metadata"
+                    onError={(e) => {
+                      console.error("Video error:", currentMedia.path, e?.currentTarget?.error);
+                      setFailedVideos((prev) => ({ ...prev, [currentMedia.path]: true }));
+                    }}
                     sx={{
                       // The media caps its own height in viewport units (not a %
                       // of an indefinite flex parent) so a portrait strip scales
@@ -428,13 +532,16 @@ function PhotoSharePage() {
                       objectFit: "contain",
                     }}
                   />
-                ) : (
+                ) : currentStill ? (
+                  // Stills, and the fallback for a video this browser refused.
                   <Box
                     component="img"
-                    src={currentMedia.path}
+                    key={currentStill}
+                    src={currentStill}
                     alt={currentMedia.label}
                     loading="lazy"
                     decoding="async"
+                    onError={retryImageOnError(currentStill)}
                     sx={{
                       maxWidth: "100%",
                       maxHeight: { xs: "53.9dvh", sm: "47.9dvh" },
@@ -444,6 +551,24 @@ function PhotoSharePage() {
                       objectFit: "contain",
                     }}
                   />
+                ) : (
+                  // Video the browser cannot play, with no thumb to fall back
+                  // on. Rare, but better named than left as an empty box.
+                  <Typography
+                    sx={{
+                      color: "#fff",
+                      opacity: 0.7,
+                      px: 3,
+                      py: 6,
+                      textAlign: "center",
+                      fontSize: "clamp(0.7rem, 1.6vmin, 0.9rem)",
+                      fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+                    }}
+                  >
+                    This clip can&apos;t be played on this device.
+                    <br />
+                    Use DOWNLOAD to save it.
+                  </Typography>
                 )}
 
                 {/* Frame counter — top-left (1/2, 2/2; 1/1 when single) */}

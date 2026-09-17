@@ -36,6 +36,9 @@ function VisaSharePage() {
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  // The sharing period ended. Distinct from loadError: there is nothing to
+  // retry, so the auto-retry loop below must not start.
+  const [expired, setExpired] = useState(false);
   const [errorDetail, setErrorDetail] = useState("");
   const [mediaItems, setMediaItems] = useState([]);
   const [selectedMedia, setSelectedMedia] = useState(null);
@@ -110,6 +113,11 @@ function VisaSharePage() {
       setMediaItems(items);
       setLoading(false);
     } catch (error) {
+      if (error?.expired) {
+        setExpired(true);
+        setLoading(false);
+        return;
+      }
       console.error("Failed to load media:", error, error?.diagnostics);
       setLoadError(true);
       const diag = Array.isArray(error?.diagnostics)
@@ -129,7 +137,7 @@ function VisaSharePage() {
   }, [shortUUID]);
 
   useEffect(() => {
-    if (!loadError || autoRetryCount >= MAX_AUTO_RETRIES) return;
+    if (expired || !loadError || autoRetryCount >= MAX_AUTO_RETRIES) return;
     setRetryCountdown(RETRY_INTERVAL_SEC);
     const tickId = setInterval(() => {
       setRetryCountdown((s) => (s > 0 ? s - 1 : 0));
@@ -144,7 +152,7 @@ function VisaSharePage() {
       clearTimeout(retryId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadError, autoRetryCount]);
+  }, [expired, loadError, autoRetryCount]);
 
   const handleOpen = (item) => setSelectedMedia(item);
   const handleClose = () => {
@@ -197,6 +205,19 @@ function VisaSharePage() {
           {loading ? (
             <div className="visa-share-page__status">
               <ClipLoader color="#F4F0D3" loading={true} size={80} />
+            </div>
+          ) : expired ? (
+            <div className="visa-share-page__status">
+              <Typography className="visa-share-page__status-title">
+                Sharing has ended
+              </Typography>
+              <Typography className="visa-share-page__status-text">
+                These photos were available for a limited time after your
+                session and have now been removed.
+              </Typography>
+              <Typography className="visa-share-page__status-text">
+                Anything you already saved stays on your device.
+              </Typography>
             </div>
           ) : loadError || mediaItems.length === 0 ? (
             <div className="visa-share-page__status">

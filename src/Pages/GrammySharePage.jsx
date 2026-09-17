@@ -91,6 +91,9 @@ function GrammySharePage() {
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  // The sharing period ended. Distinct from loadError: there is nothing to
+  // retry, so the auto-retry loop below must not start.
+  const [expired, setExpired] = useState(false);
   const [photoItem, setPhotoItem] = useState(null);
   const [videoItem, setVideoItem] = useState(null);
   const [autoRetryCount, setAutoRetryCount] = useState(0);
@@ -141,6 +144,11 @@ function GrammySharePage() {
       setIndex(0);
       setLoading(false);
     } catch (error) {
+      if (error?.expired) {
+        setExpired(true);
+        setLoading(false);
+        return;
+      }
       console.error("Failed to load media:", error, error?.diagnostics);
       setLoadError(true);
       setLoading(false);
@@ -155,7 +163,7 @@ function GrammySharePage() {
 
   useEffect(() => {
     const noMedia = !photoItem && !videoItem;
-    if (!(loadError || noMedia) || autoRetryCount >= MAX_AUTO_RETRIES || loading) return;
+    if (expired || !(loadError || noMedia) || autoRetryCount >= MAX_AUTO_RETRIES || loading) return;
     setRetryCountdown(RETRY_INTERVAL_SEC);
     const tickId = setInterval(() => setRetryCountdown((s) => (s > 0 ? s - 1 : 0)), 1000);
     const retryId = setTimeout(() => {
@@ -168,7 +176,7 @@ function GrammySharePage() {
       clearTimeout(retryId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadError, photoItem, videoItem, autoRetryCount, loading]);
+  }, [expired, loadError, photoItem, videoItem, autoRetryCount, loading]);
 
   // Slides in a fixed order: photo first, then live photo (video).
   const slides = useMemo(
@@ -239,7 +247,18 @@ function GrammySharePage() {
               </div>
             ) : !hasMedia ? (
               <div className="grammy-share-frame__status">
-                {autoRetryCount < MAX_AUTO_RETRIES ? (
+                {expired ? (
+                  <>
+                    <Typography className="grammy-share-frame__status-title">Sharing has ended</Typography>
+                    <Typography className="grammy-share-frame__status-text">
+                      These photos were available for a limited time after your
+                      session and have now been removed.
+                    </Typography>
+                    <Typography className="grammy-share-frame__status-text">
+                      Anything you already saved stays on your device.
+                    </Typography>
+                  </>
+                ) : autoRetryCount < MAX_AUTO_RETRIES ? (
                   <>
                     <ClipLoader color="#58BC47" loading={true} size={48} />
                     <Typography className="grammy-share-frame__status-title">Just a moment</Typography>

@@ -6,6 +6,35 @@ const MAX_ATTEMPTS = 4;
 const RETRY_DELAYS_MS = [400, 1200, 3000]; // before attempts 2, 3, 4
 
 /**
+ * The sharing period has ended and the photos are gone. Not a failure to
+ * retry — the answer will be the same every time, and retrying would leave a
+ * guest watching a spinner for five seconds before a wrong message.
+ */
+export class ShareExpiredError extends Error {
+  constructor() {
+    super("This share link has expired");
+    this.name = "ShareExpiredError";
+    this.expired = true;
+  }
+}
+
+function statusOf(err) {
+  return err?.response?.status ?? err?.status ?? null;
+}
+
+/**
+ * When the link stops working, as an ISO string on the payload, or null when
+ * it never does. Lets a page that is already open close itself on time instead
+ * of keeping usable photos on screen past the deadline.
+ */
+export function pickExpiresAt(raw) {
+  const value = raw?.data?.expiresAt ?? raw?.expiresAt ?? null;
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+/**
  * @param {string} apiBase - VITE_APIHUB_URL
  * @param {string} shortUUID
  * @returns {Promise<{ source: Array, diagnostics: Array }>}
@@ -38,6 +67,9 @@ export async function fetchMediaWithRetry(apiBase, shortUUID) {
 
       diagnostics.push({ attempt, via, status, contentType, kind: "empty-source", bodyKeys: data && typeof data === "object" ? Object.keys(data) : [] });
     } catch (err) {
+      // 410 is the server saying the window closed. Stop here: it is an
+      // answer, not an outage.
+      if (statusOf(err) === 410) throw new ShareExpiredError();
       diagnostics.push({ attempt, via, kind: "error", message: err?.message || String(err), status: err?.response?.status });
     }
 

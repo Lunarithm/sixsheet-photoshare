@@ -80,6 +80,9 @@ function PhotoSharePage() {
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  // The sharing period ended. Distinct from loadError: there is nothing to
+  // retry, so the auto-retry loop below must not start.
+  const [expired, setExpired] = useState(false);
   const [errorDetail, setErrorDetail] = useState("");
   const [mediaItems, setMediaItems] = useState([]);
   const [selectedType, setSelectedType] = useState("LIVE_PHOTO");
@@ -160,6 +163,11 @@ function PhotoSharePage() {
       setMediaItems(items);
       setLoading(false);
     } catch (error) {
+      if (error?.expired) {
+        setExpired(true);
+        setLoading(false);
+        return;
+      }
       console.error("Failed to load media:", error, error?.diagnostics);
       setLoadError(true);
       const diag = Array.isArray(error?.diagnostics)
@@ -182,7 +190,7 @@ function PhotoSharePage() {
   }, [shortUUID]);
 
   useEffect(() => {
-    if (!loadError || autoRetryCount >= MAX_AUTO_RETRIES) return;
+    if (expired || !loadError || autoRetryCount >= MAX_AUTO_RETRIES) return;
     setRetryCountdown(RETRY_INTERVAL_SEC);
     const tickId = setInterval(() => {
       setRetryCountdown((s) => (s > 0 ? s - 1 : 0));
@@ -197,7 +205,7 @@ function PhotoSharePage() {
       clearTimeout(retryId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadError, autoRetryCount]);
+  }, [expired, loadError, autoRetryCount]);
 
   // Once the media list arrives, snap the default selection to whatever
   // is actually available — prefer LIVE PHOTO, else fall back in order.
@@ -446,7 +454,18 @@ function PhotoSharePage() {
                   overflowY: "auto",
                 }}
               >
-                {autoRetryCount < MAX_AUTO_RETRIES ? (
+                {expired ? (
+                  <>
+                    <Typography sx={{ color: "#fff", fontSize: "clamp(0.85rem, 2vmin, 1.05rem)", fontWeight: 600 }}>
+                      Sharing has ended
+                    </Typography>
+                    <Typography sx={{ color: "#fff", fontSize: "clamp(0.7rem, 1.6vmin, 0.9rem)", opacity: 0.7, mt: "6px" }}>
+                      These photos were available for a limited time after your
+                      session and have now been removed. Anything you already
+                      saved stays on your device.
+                    </Typography>
+                  </>
+                ) : autoRetryCount < MAX_AUTO_RETRIES ? (
                   <>
                     <ClipLoader color={ACCENT} loading size={36} />
                     <Typography sx={{ color: "#fff", fontSize: "clamp(0.75rem, 1.8vmin, 1rem)", mt: "8px", opacity: 0.9 }}>

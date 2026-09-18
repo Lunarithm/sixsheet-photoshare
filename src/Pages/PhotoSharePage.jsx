@@ -328,8 +328,15 @@ function PhotoSharePage() {
           maxWidth: "100vw",
           overflow: "hidden",
           // The colour sits under the image as well as replacing it: it shows
-          // while the image loads, and anywhere `cover` does not reach.
+          // before the image is applied, and anywhere `cover` does not reach.
           bgcolor: branding.background.colour,
+          // Branding lands a moment after the page does — `useBranding` holds
+          // each asset back until it has decoded. Easing the colour makes that
+          // read as the page finishing rather than as something changing its
+          // mind. The image cannot be transitioned in CSS and does not need to
+          // be: it is already decoded when it is applied, so it paints whole.
+          transition: "background-color 400ms ease",
+          "@media (prefers-reduced-motion: reduce)": { transition: "none" },
           ...(backgroundImage && {
             backgroundImage: cssUrl(backgroundImage),
             backgroundSize: "cover",
@@ -376,6 +383,10 @@ function PhotoSharePage() {
               component="img"
               src={brandLogo ?? capturesIcon}
               alt=""
+              // Already downloaded and decoded by the time `brandLogo` is set,
+              // so this swap paints in one frame. `async` keeps the default
+              // icon off the critical path on first render too.
+              decoding="async"
               sx={{
                 width: { xs: "clamp(48px, 9vmin, 84px)", sm: "clamp(36px, 4.8vmin, 48px)" },
                 height: { xs: "clamp(48px, 9vmin, 84px)", sm: "clamp(36px, 4.8vmin, 48px)" },

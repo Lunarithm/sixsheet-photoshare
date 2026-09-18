@@ -1,0 +1,138 @@
+// Per-account branding for the share page: the operator's logo, and the
+// background behind the photos. Set by the account owner in the platform's
+// Preferences → Branding tab and read here by the folder in our own URL.
+//
+// This is what replaces hand-built per-customer templates (`/visa`, `/grammy`)
+// for the ordinary case: one `/photoshare` page that wears whichever brand the
+// folder belongs to.
+
+/**
+ * The look of an unbranded page — black, no logo override.
+ *
+ * Must stay identical to the platform's `DEFAULT_BACKGROUND_COLOUR`, and both
+ * must match what `PhotoSharePage` renders without branding. An account that
+ * never opened the branding tab has to look exactly as it did before this
+ * existed; a mismatch here repaints every one of them.
+ */
+export const DEFAULT_BRANDING = Object.freeze({
+  logo: null,
+  background: Object.freeze({ kind: "colour", url: null, colour: "#000000" }),
+});
+
+/**
+ * Give up quickly. Branding is decoration on a page whose job is to show
+ * somebody their photos — waiting on it is worse than not having it, and the
+ * photos are fetched in parallel anyway.
+ */
+const TIMEOUT_MS = 2500;
+
+const HEX = /^#[0-9a-fA-F]{6}$/;
+
+/**
+ * An http(s) URL, or null.
+ *
+ * The response is trusted-ish — it comes from our own platform — but it lands
+ * in a `src` and a `url()`, so a `javascript:` or `data:` value is refused here
+ * rather than relied on being impossible upstream. Costs one check.
+ */
+function safeUrl(value) {
+  if (typeof value !== "string" || value === "") return null;
+  try {
+    const parsed = new URL(value, window.location.origin);
+    return parsed.protocol === "https:" || parsed.protocol === "http:"
+      ? parsed.toString()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A validated URL wrapped for a CSS `background-image`.
+ *
+ * `CSS.escape` is the wrong tool here — it escapes identifiers, not URL
+ * strings, and would mangle the scheme and slashes. What actually matters
+ * inside `url("...")` is that the string cannot be closed early, and `safeUrl`
+ * has already run the value through the URL parser, which percent-encodes
+ * quotes and whitespace. The two replacements below are belt and braces.
+ */
+export function cssUrl(url) {
+  const escaped = String(url).replace(/\\/g, "%5C").replace(/"/g, "%22");
+  return `url("${escaped}")`;
+}
+
+function safeImage(value) {
+  const url = safeUrl(value?.url);
+  if (!url) return null;
+  const width = Number(value?.width);
+  const height = Number(value?.height);
+  return {
+    url,
+    width: Number.isFinite(width) && width > 0 ? width : null,
+    height: Number.isFinite(height) && height > 0 ? height : null,
+  };
+}
+
+/**
+ * Coerce whatever came back into something safe to render.
+ *
+ * Every field falls back on its own: a payload with a good logo and a nonsense
+ * colour should still show the logo. Nothing here throws.
+ */
+export function normaliseBranding(payload) {
+  const branding = payload?.data?.branding ?? payload?.branding ?? null;
+  if (!branding || typeof branding !== "object") return DEFAULT_BRANDING;
+
+  const background = branding.background ?? {};
+  const colour = HEX.test(background.colour)
+    ? background.colour
+    : DEFAULT_BRANDING.background.colour;
+  const imageUrl = background.kind === "image" ? safeUrl(background.url) : null;
+
+  return {
+    logo: safeImage(branding.logo),
+    background: {
+      // The colour wins when the image is missing or unusable, so the page
+      // always has something to paint. Mirrors `resolveBackground` on the
+      // platform, which makes the same call one layer earlier.
+      kind: imageUrl ? "image" : "colour",
+      url: imageUrl,
+      colour,
+    },
+  };
+}
+
+/**
+ * Fetch the branding for a share folder.
+ *
+ * Never rejects and never throws: an unreachable platform, a timeout, a 500 or
+ * a body that is not what we expect all resolve to {@link DEFAULT_BRANDING},
+ * which is the page exactly as it looked before this feature. A guest opening
+ * their photos must never see a failure that belongs to a logo.
+ *
+ * @param {string} folder - the `shortUUID` route param
+ * @returns {Promise<typeof DEFAULT_BRANDING>}
+ */
+export async function fetchBranding(folder) {
+  const base = import.meta.env.VITE_PLATFORM_URL;
+  if (!base || !folder) return DEFAULT_BRANDING;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  try {
+    const url = `${String(base).replace(/\/+$/, "")}/api/v1/public/photoshare/branding?folder=${encodeURIComponent(folder)}`;
+    // Deliberately no credentials: the endpoint serves
+    // `Access-Control-Allow-Origin: *`, which a browser refuses to expose to a
+    // credentialed request.
+    const res = await fetch(url, { signal: controller.signal, credentials: "omit" });
+    if (!res.ok) return DEFAULT_BRANDING;
+    return normaliseBranding(await res.json());
+  } catch {
+    // Includes the abort. Silent on purpose — there is nothing a guest or an
+    // operator can do about it, and the page is already correct without it.
+    return DEFAULT_BRANDING;
+  } finally {
+    clearTimeout(timer);
+  }
+}

@@ -12,6 +12,8 @@ import "../assets/font.css";
 import "../assets/css/photoShare.css";
 // Top-center logo icon — swap this file (or change the path) to change the icon.
 import capturesIcon from "../assets/iconCap.png";
+import { useBranding } from "../lib/useBranding";
+import { cssUrl } from "../lib/branding";
 
 const ACCENT = "#D4FF3D";
 // QR caption ("Scan to download / or print") — Neulis Neue per the design.
@@ -77,6 +79,14 @@ function QrGlyph({ size = 22 }) {
 
 function PhotoSharePage() {
   const { shortUUID } = useParams();
+
+  // The account's own logo and background, or the defaults this page has
+  // always used. Resolves to the defaults on any failure, so nothing below
+  // needs a fallback branch of its own.
+  const branding = useBranding(shortUUID);
+  const brandLogo = branding.logo?.url ?? null;
+  const backgroundImage =
+    branding.background.kind === "image" ? branding.background.url : null;
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -317,7 +327,15 @@ function PhotoSharePage() {
           width: "100vw",
           maxWidth: "100vw",
           overflow: "hidden",
-          bgcolor: "#000",
+          // The colour sits under the image as well as replacing it: it shows
+          // while the image loads, and anywhere `cover` does not reach.
+          bgcolor: branding.background.colour,
+          ...(backgroundImage && {
+            backgroundImage: cssUrl(backgroundImage),
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }),
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -356,7 +374,7 @@ function PhotoSharePage() {
           >
             <Box
               component="img"
-              src={capturesIcon}
+              src={brandLogo ?? capturesIcon}
               alt=""
               sx={{
                 width: { xs: "clamp(48px, 9vmin, 84px)", sm: "clamp(36px, 4.8vmin, 48px)" },
@@ -367,7 +385,11 @@ function PhotoSharePage() {
             />
             <Typography
               sx={{
-                display: { xs: "none", sm: "block" },
+                // Hidden once the account has its own mark: the wordmark is
+                // ours, and printing it beside a customer's logo reads as a
+                // co-brand nobody agreed to. "POWERED BY SIXSHEET" in the
+                // footer is the attribution that stays.
+                display: brandLogo ? "none" : { xs: "none", sm: "block" },
                 color: ACCENT,
                 fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
                 fontWeight: 800,

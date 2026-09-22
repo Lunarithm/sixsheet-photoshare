@@ -41,33 +41,33 @@
 
 @font-face {
   font-family: 'PPNeueMachinaUltrabold';
-  src: url('../src/assets/fonts/PPNeueMachina-Ultrabold.otf') format('truetype');
+  src: url('./fonts/PPNeueMachina-Ultrabold.otf') format('opentype');
   /* font-weight: normal;
   font-style: normal; */
 }
 
 @font-face {
   font-family: 'PPNeueMachinaRegular';
-  src: url('../src/assets/fonts/PPNeueMachina-Regular.otf') format('truetype');
+  src: url('./fonts/PPNeueMachina-Regular.otf') format('opentype');
   /* font-weight: normal;
   font-style: normal; */
 }
 
 @font-face {
   font-family: 'PPNeueMachinaLight';
-  src: url('../src/assets/fonts/PPNeueMachina-Light.otf') format('truetype');
+  src: url('./fonts/PPNeueMachina-Light.otf') format('opentype');
   /* font-weight: normal;
   font-style: normal; */
 }
 
 @font-face {
     font-family: 'Bricolage Grotesque';
-    src: url('../src/assets/fonts/BricolageGrotesque-VariableFont_opsz,wdth,wght.ttf') format('truetype');
+    src: url('./fonts/BricolageGrotesque-VariableFont_opsz,wdth,wght.ttf') format('truetype');
 }
 
 @font-face {
     font-family: 'inter';
-    src: url('../src/assets/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+    src: url('./fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
 }
 
 /* Neulis Neue — used by the PhotoShare QR caption ("Scan to download / or print").

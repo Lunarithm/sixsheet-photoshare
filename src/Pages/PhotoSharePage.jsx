@@ -8,6 +8,7 @@ import { useParams } from "react-router-dom";
 import ClipLoader from "react-spinners/ClipLoader";
 import { fetchMediaWithRetry, unregisterStaleServiceWorkers } from "../lib/fetchMedia";
 import QRCode from "react-qr-code";
+import { saveAs } from "file-saver";
 import "../assets/font.css";
 import "../assets/css/photoShare.css";
 // Top-center logo icon — swap this file (or change the path) to change the icon.
@@ -52,11 +53,22 @@ const retryImageOnError = (src) => (e) => {
   }, backoff[attempt]);
 };
 
+// `optional` types are hidden when the session has none of them, rather than
+// shown greyed out like the three a booth always produces. Raw originals are
+// a per-session setting, so a session without them must look exactly as it did
+// before raw images existed.
 const TYPES = [
-  { key: "PRINT", label: "PRINT", mediaLabel: "Photo" },
+  { key: "PRINT", label: "IMAGE", mediaLabel: "Photo" },
   { key: "LIVE_PHOTO", label: "LIVE PHOTO", mediaLabel: "Video" },
   { key: "GIF", label: "GIF", mediaLabel: "Slideshow" },
+  { key: "RAW", label: "RAW IMAGE", mediaLabel: "Raw", optional: true },
 ];
+
+// The unframed originals, which the kiosk names `raw_01.jpg`, `raw_02.jpg`,
+// … in shot order (`raw_01_02.jpg` for a multi-frame run). The prefix is a
+// deliberate contract on the kiosk side — it is how they are told apart from
+// the composed frame, which is the only thing IMAGE should show.
+const isRawName = (name) => /^raw_/i.test(name);
 
 function QrGlyph({ size = 22 }) {
   return (
@@ -101,6 +113,10 @@ function PhotoSharePage() {
   const [failedVideos, setFailedVideos] = useState({});
   const [autoRetryCount, setAutoRetryCount] = useState(0);
   const [retryCountdown, setRetryCountdown] = useState(0);
+  // DOWNLOAD in flight, and the last thing that went wrong. Fetching a file
+  // takes long enough on a phone that an unmarked button reads as broken.
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
   const MAX_AUTO_RETRIES = 12;
   const RETRY_INTERVAL_SEC = 10;
 
@@ -112,9 +128,20 @@ function PhotoSharePage() {
   const getLabel = (name) => {
     if (name.startsWith("slideshow")) return "Slideshow";
     if (name.startsWith("video_Result")) return "Video";
+    if (isRawName(name)) return "Raw";
     return "Photo";
   };
 
+  // `no-store` is load-bearing, not caution. The preview renders these same
+  // URLs through an <img>/<video> that carries no crossorigin attribute, which
+  // leaves an opaque response in the HTTP cache; a later CORS fetch of that URL
+  // reuses the opaque entry and rejects, however well the bucket answers.
+  // Measured on the deployed page: the poisoned URL fails under the default
+  // cache mode and returns 200 under `no-store`. The other way round it —
+  // crossorigin="anonymous" on the media — was tried and reverted: the bucket's
+  // CORS allowlist covers our deployed origin only, so anywhere else (a dev
+  // server, a customer domain) the photos stop rendering at all rather than
+  // merely failing to save.
   async function convertUrlToFile(url, name) {
     try {
       const response = await fetch(url, { cache: "no-store" });
@@ -152,7 +179,13 @@ function PhotoSharePage() {
       }
 
       const displaySource = source.filter((s) => !s.name.endsWith("_thumb.jpg"));
-      const imageItem = displaySource.find((s) => /\.(jpe?g|png|webp)$/i.test(s.name));
+      // Last-resort poster for a video that shipped without its own thumb.
+      // The composed frame is the one that stands in for a session, so a raw
+      // original is taken only when there is nothing else.
+      const isStill = (s) => /\.(jpe?g|png|webp)$/i.test(s.name);
+      const imageItem =
+        displaySource.find((s) => isStill(s) && !isRawName(s.name)) ||
+        displaySource.find(isStill);
       const imageOnlyFallback = imageItem?.path || "";
 
       const items = displaySource.map((item) => {
@@ -237,7 +270,7 @@ function PhotoSharePage() {
   }, [mediaItems, selectedType]);
 
   // Which frame set is showing. Deliberately NOT reset when the user switches
-  // type (PRINT/LIVE PHOTO/GIF) or when items update (e.g. a file finishes
+  // type (IMAGE/LIVE PHOTO/GIF/RAW IMAGE) or when items update (e.g. a file finishes
   // caching after download) — set 2 stays selected until the user clicks
   // set 1 themselves. Reset only when a new share session (shortUUID) loads.
   const [mediaIndex, setMediaIndex] = useState(0);
@@ -262,6 +295,11 @@ function PhotoSharePage() {
     : "";
   const videoUnplayable = !!currentMedia && !!failedVideos[currentMedia.path];
 
+  // A download failure belongs to one file — switching frame or type clears it.
+  useEffect(() => {
+    setDownloadError("");
+  }, [currentMedia?.path]);
+
 
   const availableKeys = useMemo(
     () => TYPES.filter((t) => mediaItems.some((m) => m.label === t.mediaLabel)).map((t) => t.key),
@@ -284,16 +322,49 @@ function PhotoSharePage() {
     return file;
   };
 
-  // Labeled DOWNLOAD, but identical to the old share button: opens the
-  // native share sheet with the file. No download fallback — browsers
-  // without Web Share (most desktop) simply do nothing, same as before.
+  // Prefer the native share sheet — it is the only route that offers "Save to
+  // Photos" — but never depend on it. Every browser without Web Share (most of
+  // the desktop, and any browser that has `share` but refuses files) gets a
+  // plain file download instead of the silent no-op this button used to be.
   const handleDownload = async () => {
-    if (!currentMedia || !navigator.share) return;
+    if (!currentMedia || downloading) return;
+    setDownloading(true);
+    setDownloadError("");
     try {
       const file = await getFile(currentMedia);
-      if (file) await navigator.share({ files: [file] });
+      if (!file) {
+        // The bytes never arrived — a bucket that refuses CORS from this
+        // origin, or a dropped connection. Nothing can be handed to the share
+        // sheet or wrapped in a blob, but the file itself is public: open it
+        // so a long-press or right-click still saves it.
+        console.error("Could not fetch, opening directly:", currentMedia.path);
+        if (!window.open(currentMedia.path, "_blank", "noopener")) {
+          setDownloadError("Couldn't save that file. Please try again.");
+        }
+        return;
+      }
+      // `canShare` is the real gate: `navigator.share` exists in places that
+      // cannot take files. And the fetch above may have outlived the click's
+      // user activation (iOS gives it about five seconds), after which share
+      // throws however well-formed the call is. Both land on the download
+      // below rather than on nothing at all.
+      if (navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file] });
+          return;
+        } catch (err) {
+          // The guest closing the sheet is a decision, not a failure — saving
+          // the file anyway would override it.
+          if (err?.name === "AbortError") return;
+          console.error("Share failed, falling back to download:", err);
+        }
+      }
+      saveAs(file, currentMedia.name);
     } catch (err) {
-      console.error("Share failed:", err);
+      console.error("Download failed:", currentMedia?.name, err);
+      setDownloadError("Couldn't save that file. Please try again.");
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -558,6 +629,7 @@ function PhotoSharePage() {
                     component="video"
                     key={currentMedia.path}
                     src={currentMedia.path}
+                    // No crossOrigin here on purpose — see convertUrlToFile.
                     // Painted until the first frame decodes — and left standing
                     // on devices whose decoder rejects the file outright (iOS
                     // refuses H.264 above its 4K / level ceiling, for one),
@@ -578,6 +650,11 @@ function PhotoSharePage() {
                       // down whole instead of getting cropped by overflow.
                       maxWidth: "100%",
                       maxHeight: { xs: "53.9dvh", sm: "47.9dvh" },
+                      // A phone narrow enough to wrap the type pills onto a
+                      // second row has that row's height less for the media;
+                      // without this the column outgrows the viewport it is
+                      // promised to fit in and rides up over the title.
+                      "@media (max-width: 359.95px)": { maxHeight: "46dvh" },
                       width: "auto",
                       height: "auto",
                       display: "block",
@@ -597,6 +674,11 @@ function PhotoSharePage() {
                     sx={{
                       maxWidth: "100%",
                       maxHeight: { xs: "53.9dvh", sm: "47.9dvh" },
+                      // A phone narrow enough to wrap the type pills onto a
+                      // second row has that row's height less for the media;
+                      // without this the column outgrows the viewport it is
+                      // promised to fit in and rides up over the title.
+                      "@media (max-width: 359.95px)": { maxHeight: "46dvh" },
                       width: "auto",
                       height: "auto",
                       display: "block",
@@ -647,14 +729,17 @@ function PhotoSharePage() {
             )}
           </Box>
 
-          {/* Frame toggle — switches between frame set 1 / 2 when the
-              selected type has more than one file */}
+          {/* Frame toggle — one button per file of the selected type. IMAGE
+              holds the 1–2 composed frames, but RAW IMAGE holds one per shot
+              and can run to eight or more: the row must wrap rather than run
+              off a page that has no scrollbar to reach it. */}
           {currentItems.length > 1 && (
             <Box
               sx={{
                 flexShrink: 0,
                 display: "flex",
                 gap: "clamp(6px, 1.2vmin, 12px)",
+                flexWrap: "wrap",
                 justifyContent: "center",
                 mt: "clamp(8px, 1.6vmin, 14px)",
               }}
@@ -699,7 +784,7 @@ function PhotoSharePage() {
               mt: { xs: "clamp(22.4px, 4.75vmin, 44.9px)", sm: "clamp(10.2px, 2.18vmin, 20.3px)" },
             }}
           >
-            {TYPES.map((t) => {
+            {TYPES.filter((t) => !t.optional || availableKeys.includes(t.key)).map((t) => {
               const active = selectedType === t.key;
               const enabled = availableKeys.length === 0 || availableKeys.includes(t.key);
               return (
@@ -734,7 +819,7 @@ function PhotoSharePage() {
           {/* Download button */}
           <Button
             onClick={handleDownload}
-            disabled={!currentMedia}
+            disabled={!currentMedia || downloading}
             disableRipple
             sx={{
               flexShrink: 0,
@@ -757,9 +842,30 @@ function PhotoSharePage() {
               "&.Mui-disabled": { bgcolor: ACCENT, color: "#000", opacity: 0.4 },
             }}
           >
-            DOWNLOAD
-            <Box component="span" sx={{ ml: "10px", fontSize: "clamp(0.95rem, 2.2vmin, 1.3rem)", lineHeight: 1 }}>→</Box>
+            {downloading ? "SAVING…" : "DOWNLOAD"}
+            {!downloading && (
+              <Box component="span" sx={{ ml: "10px", fontSize: "clamp(0.95rem, 2.2vmin, 1.3rem)", lineHeight: 1 }}>→</Box>
+            )}
           </Button>
+
+          {/* The one thing this button must never do again is fail in silence. */}
+          {downloadError && (
+            <Typography
+              role="alert"
+              sx={{
+                flexShrink: 0,
+                mt: "clamp(6px, 1.2vmin, 10px)",
+                maxWidth: "clamp(150px, 28.7vmin, 218px)",
+                color: "#fff",
+                opacity: 0.8,
+                fontSize: "clamp(0.65rem, 1.5vmin, 0.8rem)",
+                lineHeight: 1.35,
+                fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+              }}
+            >
+              {downloadError}
+            </Typography>
+          )}
           </Box>
 
           {/* Right column (desktop only): always-visible QR */}

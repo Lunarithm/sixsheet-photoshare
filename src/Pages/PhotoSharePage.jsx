@@ -15,27 +15,27 @@ import capturesIcon from "../assets/iconCap.png";
 import { useBranding } from "../lib/useBranding";
 import { cssUrl } from "../lib/branding";
 
-const ACCENT = "#D4FF3D";
 // QR caption ("Scan to download / or print") — Neulis Neue per the design.
 // Face is declared in src/assets/font.css.
 const QR_CAPTION_FONT = '"Neulis Neue", "Inter", "Helvetica Neue", Arial, sans-serif';
 // Shared style for the two recovery buttons in the error states — same
-// language as the DOWNLOAD button, one size down.
-const RETRY_BUTTON_SX = {
+// language as the DOWNLOAD button, one size down. A factory rather than a
+// constant now that the fill and the label are the account's own.
+const retryButtonSx = (fill, label) => ({
   mt: "clamp(10px, 2vmin, 18px)",
   px: "clamp(16px, 3vmin, 28px)",
   height: "clamp(30px, 4.8vmin, 42px)",
   borderRadius: "clamp(3px, 0.6vmin, 6px)",
-  bgcolor: ACCENT,
-  color: "#000",
+  bgcolor: fill,
+  color: label,
   fontWeight: 800,
   fontSize: "clamp(0.7rem, 1.6vmin, 0.9rem)",
   letterSpacing: "0.06em",
   fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
   textTransform: "none",
   boxShadow: "none",
-  "&:hover": { bgcolor: ACCENT, boxShadow: "none", filter: "brightness(0.95)" },
-};
+  "&:hover": { bgcolor: fill, boxShadow: "none", filter: "brightness(0.95)" },
+});
 
 // Safari intermittently drops an S3 image fetch on a cold connection. Retry a
 // few times with backoff and a cache-busting param instead of leaving a broken
@@ -87,6 +87,10 @@ function PhotoSharePage() {
   const brandLogo = branding.logo?.url ?? null;
   const backgroundImage =
     branding.background.kind === "image" ? branding.background.url : null;
+  // The defaults in `DEFAULT_BRANDING` are the values this file used to
+  // hard-code — `#fff` text, the `#D4FF3D` accent, black on it — so an account
+  // that has set nothing renders exactly as it did before any of this existed.
+  const { text: textColour, button: buttonColour, buttonLabel } = branding.colours;
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -401,7 +405,7 @@ function PhotoSharePage() {
                 // co-brand nobody agreed to. "POWERED BY SIXSHEET" in the
                 // footer is the attribution that stays.
                 display: brandLogo ? "none" : { xs: "none", sm: "block" },
-                color: ACCENT,
+                color: buttonColour,
                 fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
                 fontWeight: 800,
                 fontSize: "clamp(1rem, 2.2vmin, 1.35rem)",
@@ -416,7 +420,7 @@ function PhotoSharePage() {
           <Typography
             sx={{
               flexShrink: 0,
-              color: "#fff",
+              color: textColour,
               fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
               fontWeight: 700,
               fontSize: "clamp(1.05rem, 3.2vmin, 1.9rem)",
@@ -473,7 +477,7 @@ function PhotoSharePage() {
             }}
           >
             {loading ? (
-              <ClipLoader color={ACCENT} loading size={48} />
+              <ClipLoader color={buttonColour} loading size={48} />
             ) : loadError || !currentMedia ? (
               <Box
                 sx={{
@@ -489,10 +493,10 @@ function PhotoSharePage() {
               >
                 {expired ? (
                   <>
-                    <Typography sx={{ color: "#fff", fontSize: "clamp(0.85rem, 2vmin, 1.05rem)", fontWeight: 600 }}>
+                    <Typography sx={{ color: textColour, fontSize: "clamp(0.85rem, 2vmin, 1.05rem)", fontWeight: 600 }}>
                       Sharing has ended
                     </Typography>
-                    <Typography sx={{ color: "#fff", fontSize: "clamp(0.7rem, 1.6vmin, 0.9rem)", opacity: 0.7, mt: "6px" }}>
+                    <Typography sx={{ color: textColour, fontSize: "clamp(0.7rem, 1.6vmin, 0.9rem)", opacity: 0.7, mt: "6px" }}>
                       These photos were available for a limited time after your
                       session and have now been removed. Anything you already
                       saved stays on your device.
@@ -500,28 +504,28 @@ function PhotoSharePage() {
                   </>
                 ) : autoRetryCount < MAX_AUTO_RETRIES ? (
                   <>
-                    <ClipLoader color={ACCENT} loading size={36} />
-                    <Typography sx={{ color: "#fff", fontSize: "clamp(0.75rem, 1.8vmin, 1rem)", mt: "8px", opacity: 0.9 }}>
+                    <ClipLoader color={buttonColour} loading size={36} />
+                    <Typography sx={{ color: textColour, fontSize: "clamp(0.75rem, 1.8vmin, 1rem)", mt: "8px", opacity: 0.9 }}>
                       Your photos are still being uploaded.
                     </Typography>
-                    <Typography sx={{ color: "#fff", fontSize: "clamp(0.7rem, 1.6vmin, 0.9rem)", opacity: 0.65, mt: "4px" }}>
+                    <Typography sx={{ color: textColour, fontSize: "clamp(0.7rem, 1.6vmin, 0.9rem)", opacity: 0.65, mt: "4px" }}>
                       Retrying in {retryCountdown}s.
                     </Typography>
                     {/* Skips the wait for a guest who knows the upload just
                         finished — the countdown alone gives them nothing to do. */}
-                    <Button onClick={checkNow} disableRipple sx={RETRY_BUTTON_SX}>
+                    <Button onClick={checkNow} disableRipple sx={retryButtonSx(buttonColour, buttonLabel)}>
                       Check Now
                     </Button>
                   </>
                 ) : (
                   <>
-                    <Typography sx={{ color: "#fff", fontSize: "clamp(0.85rem, 2vmin, 1.05rem)", fontWeight: 600 }}>
+                    <Typography sx={{ color: textColour, fontSize: "clamp(0.85rem, 2vmin, 1.05rem)", fontWeight: 600 }}>
                       Media not found
                     </Typography>
-                    <Typography sx={{ color: "#fff", fontSize: "clamp(0.7rem, 1.6vmin, 0.9rem)", opacity: 0.7, mt: "6px" }}>
+                    <Typography sx={{ color: textColour, fontSize: "clamp(0.7rem, 1.6vmin, 0.9rem)", opacity: 0.7, mt: "6px" }}>
                       This share link may have expired.
                     </Typography>
-                    <Button onClick={() => window.location.reload()} disableRipple sx={RETRY_BUTTON_SX}>
+                    <Button onClick={() => window.location.reload()} disableRipple sx={retryButtonSx(buttonColour, buttonLabel)}>
                       Try Again
                     </Button>
                     {/* Per-attempt transport/status detail. Deliberately on
@@ -536,7 +540,7 @@ function PhotoSharePage() {
                           maxWidth: "min(90vw, 520px)",
                           fontSize: "clamp(0.55rem, 1.2vmin, 0.7rem)",
                           lineHeight: 1.5,
-                          color: "#fff",
+                          color: textColour,
                           opacity: 0.55,
                           textAlign: "left",
                           whiteSpace: "pre-wrap",
@@ -608,7 +612,7 @@ function PhotoSharePage() {
                   // on. Rare, but better named than left as an empty box.
                   <Typography
                     sx={{
-                      color: "#fff",
+                      color: textColour,
                       opacity: 0.7,
                       px: 3,
                       py: 6,
@@ -630,7 +634,7 @@ function PhotoSharePage() {
                     top: "8px",
                     left: "8px",
                     bgcolor: "rgba(0,0,0,0.65)",
-                    color: "#fff",
+                    color: textColour,
                     fontWeight: 700,
                     fontSize: "clamp(0.7rem, 1.6vmin, 0.85rem)",
                     fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
@@ -669,13 +673,16 @@ function PhotoSharePage() {
                     width: "clamp(30px, 4.8vmin, 40px)",
                     height: "clamp(30px, 4.8vmin, 40px)",
                     borderRadius: "50%",
-                    bgcolor: safeIndex === i ? ACCENT : "#fff",
-                    color: "#000",
+                    bgcolor: safeIndex === i ? buttonColour : "#fff",
+                    color: safeIndex === i ? buttonLabel : "#000",
                     fontWeight: 700,
                     fontSize: "clamp(0.7rem, 1.6vmin, 0.9rem)",
                     fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
                     boxShadow: "none",
-                    "&:hover": { bgcolor: safeIndex === i ? ACCENT : "#f0f0f0", boxShadow: "none" },
+                    "&:hover": {
+                      bgcolor: safeIndex === i ? buttonColour : "#f0f0f0",
+                      boxShadow: "none",
+                    },
                   }}
                 >
                   {i + 1}
@@ -712,8 +719,8 @@ function PhotoSharePage() {
                     px: "clamp(14px, 2.6vmin, 26px)",
                     height: "clamp(28px, 4.5vmin, 40px)",
                     borderRadius: "999px",
-                    bgcolor: active ? ACCENT : "#fff",
-                    color: "#000",
+                    bgcolor: active ? buttonColour : "#fff",
+                    color: active ? buttonLabel : "#000",
                     fontWeight: 700,
                     fontSize: "clamp(0.65rem, 1.5vmin, 0.85rem)",
                     letterSpacing: "0.04em",
@@ -722,7 +729,10 @@ function PhotoSharePage() {
                     boxShadow: "none",
                     opacity: enabled ? 1 : 0.35,
                     cursor: enabled ? "pointer" : "not-allowed",
-                    "&:hover": { bgcolor: active ? ACCENT : "#f0f0f0", boxShadow: "none" },
+                    "&:hover": {
+                      bgcolor: active ? buttonColour : "#f0f0f0",
+                      boxShadow: "none",
+                    },
                   }}
                 >
                   {t.label}
@@ -745,16 +755,16 @@ function PhotoSharePage() {
               maxWidth: "clamp(150px, 28.7vmin, 218px)",
               height: { xs: "clamp(40px, 6.6vmin, 60px)", sm: "clamp(36px, 6vmin, 55px)" },
               borderRadius: "clamp(3px, 0.6vmin, 6px)",
-              bgcolor: ACCENT,
-              color: "#000",
+              bgcolor: buttonColour,
+              color: buttonLabel,
               fontWeight: 800,
               fontSize: "clamp(0.8rem, 1.9vmin, 1.05rem)",
               letterSpacing: "0.06em",
               fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
               textTransform: "none",
               boxShadow: "none",
-              "&:hover": { bgcolor: ACCENT, boxShadow: "none", filter: "brightness(0.95)" },
-              "&.Mui-disabled": { bgcolor: ACCENT, color: "#000", opacity: 0.4 },
+              "&:hover": { bgcolor: buttonColour, boxShadow: "none", filter: "brightness(0.95)" },
+              "&.Mui-disabled": { bgcolor: buttonColour, color: buttonLabel, opacity: 0.4 },
             }}
           >
             DOWNLOAD
@@ -773,7 +783,7 @@ function PhotoSharePage() {
           >
             <Box
               sx={{
-                bgcolor: "#fff",
+                bgcolor: textColour,
                 p: "clamp(10px, 1.6vmin, 16px)",
                 borderRadius: "4px",
                 display: "flex",
@@ -786,7 +796,7 @@ function PhotoSharePage() {
             </Box>
             <Typography
               sx={{
-                color: "#fff",
+                color: textColour,
                 fontWeight: 600,
                 fontSize: "clamp(0.85rem, 1.9vmin, 1.1rem)",
                 fontFamily: QR_CAPTION_FONT,
@@ -812,7 +822,7 @@ function PhotoSharePage() {
               // used everywhere else in the button zone.
               mt: "clamp(3px, 0.6vmin, 6px)",
               bgcolor: "transparent",
-              color: "#fff",
+              color: textColour,
               textTransform: "none",
               fontWeight: 600,
               fontSize: "clamp(0.75rem, 1.7vmin, 0.95rem)",
@@ -860,7 +870,7 @@ function PhotoSharePage() {
               p: "20px",
             }}
           >
-            <Box sx={{ bgcolor: "#fff", p: "12px", display: "flex" }}>
+            <Box sx={{ bgcolor: textColour, p: "12px", display: "flex" }}>
               <QRCode
                 value={window.location.href}
                 style={{ width: "min(60vw, 240px)", height: "auto" }}
@@ -868,7 +878,7 @@ function PhotoSharePage() {
             </Box>
             <Typography
               sx={{
-                color: "#fff",
+                color: textColour,
                 fontWeight: 600,
                 fontSize: "1.15rem",
                 textAlign: "center",

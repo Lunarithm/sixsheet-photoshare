@@ -17,6 +17,14 @@
 export const DEFAULT_BRANDING = Object.freeze({
   logo: null,
   background: Object.freeze({ kind: "colour", url: null, colour: "#000000" }),
+  // Each of these is what `PhotoSharePage` hard-codes today: `#fff` body text,
+  // the `ACCENT` button fill, black words on it. They have to match, because
+  // these are what every unbranded account is served.
+  colours: Object.freeze({
+    text: "#FFFFFF",
+    button: "#D4FF3D",
+    buttonLabel: "#000000",
+  }),
 });
 
 /**
@@ -61,6 +69,11 @@ export function cssUrl(url) {
   return `url("${escaped}")`;
 }
 
+/** A `#RRGGBB` string, or `fallback`. Every colour on the page goes through it. */
+function safeColour(value, fallback) {
+  return HEX.test(value) ? value : fallback;
+}
+
 function safeImage(value) {
   const url = safeUrl(value?.url);
   if (!url) return null;
@@ -84,10 +97,10 @@ export function normaliseBranding(payload) {
   if (!branding || typeof branding !== "object") return DEFAULT_BRANDING;
 
   const background = branding.background ?? {};
-  const colour = HEX.test(background.colour)
-    ? background.colour
-    : DEFAULT_BRANDING.background.colour;
+  const colour = safeColour(background.colour, DEFAULT_BRANDING.background.colour);
   const imageUrl = background.kind === "image" ? safeUrl(background.url) : null;
+
+  const colours = branding.colours ?? {};
 
   return {
     logo: safeImage(branding.logo),
@@ -98,6 +111,17 @@ export function normaliseBranding(payload) {
       kind: imageUrl ? "image" : "colour",
       url: imageUrl,
       colour,
+    },
+    // Field by field, like everything else here: a payload from a platform that
+    // does not send `colours` yet, or that sends one bad value, still styles
+    // the rest of the page rather than falling back wholesale.
+    colours: {
+      text: safeColour(colours.text, DEFAULT_BRANDING.colours.text),
+      button: safeColour(colours.button, DEFAULT_BRANDING.colours.button),
+      buttonLabel: safeColour(
+        colours.buttonLabel,
+        DEFAULT_BRANDING.colours.buttonLabel,
+      ),
     },
   };
 }

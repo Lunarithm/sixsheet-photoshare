@@ -21,7 +21,7 @@ import { whenIdle } from "./whenIdle";
  * a URL the moment the API names it would swap a drawn logo for an empty box
  * until the file arrived, and paint a background whenever it happened to land.
  *
- * And each part lands on its own. The colour needs no download so it applies
+ * And each part lands on its own. The colours need no download so they apply
  * first; a slow background does not hold up a logo that is already decoded, and
  * an image that never loads leaves the rest of the brand in place.
  *
@@ -41,12 +41,13 @@ export function useBranding(folder) {
       const next = await fetchBranding(folder);
       if (!alive()) return;
 
-      // Costs nothing to draw, so it goes up first and gives the images
+      // Colours cost nothing to draw, so they go up first and give the images
       // something to land on. `kind` stays `colour` until a background image
       // has actually decoded.
       setBranding((current) => ({
         ...current,
         background: { kind: "colour", url: null, colour: next.background.colour },
+        colours: next.colours,
       }));
 
       if (next.logo) {

@@ -48,6 +48,7 @@ export function useBranding(folder) {
         ...current,
         background: { kind: "colour", url: null, colour: next.background.colour },
         colours: next.colours,
+        showHeading: next.showHeading,
       }));
 
       if (next.logo) {

@@ -16,6 +16,9 @@
  */
 export const DEFAULT_BRANDING = Object.freeze({
   logo: null,
+  // The heading is part of the page today, so an account that has set nothing
+  // keeps it.
+  showHeading: true,
   background: Object.freeze({ kind: "colour", url: null, colour: "#000000" }),
   // Each of these is what `PhotoSharePage` hard-codes today: `#fff` body text,
   // the `ACCENT` button fill, black words on it. They have to match, because
@@ -104,6 +107,9 @@ export function normaliseBranding(payload) {
 
   return {
     logo: safeImage(branding.logo),
+    // Only an explicit `false` hides it — a platform that does not send the
+    // field yet, or sends something odd, leaves the heading where it is.
+    showHeading: branding.showHeading !== false,
     background: {
       // The colour wins when the image is missing or unusable, so the page
       // always has something to paint. Mirrors `resolveBackground` on the

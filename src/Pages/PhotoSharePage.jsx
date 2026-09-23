@@ -416,10 +416,18 @@ function PhotoSharePage() {
             </Typography>
           </Box>
 
-          {/* Title */}
+          {/* Title. Hidden with `visibility` rather than removed: the element
+              keeps its box, so turning it off leaves the logo, the photos and
+              everything below exactly where they were. `display: none` or a
+              conditional render would pull the whole column up.
+
+              `visibility: hidden` also takes it out of the accessibility tree,
+              so a screen reader does not announce a heading nobody can see. */}
           <Typography
+            aria-hidden={!branding.showHeading}
             sx={{
               flexShrink: 0,
+              visibility: branding.showHeading ? "visible" : "hidden",
               color: textColour,
               fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
               fontWeight: 700,

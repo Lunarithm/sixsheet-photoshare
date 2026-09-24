@@ -13,7 +13,7 @@ import "../assets/css/photoShare.css";
 // Top-center logo icon — swap this file (or change the path) to change the icon.
 import capturesIcon from "../assets/iconCap.png";
 import { useBranding } from "../lib/useBranding";
-import { cssUrl } from "../lib/branding";
+import { cssUrl, DEFAULT_EXPIRY_MESSAGE } from "../lib/branding";
 
 // QR caption ("Scan to download / or print") — Neulis Neue per the design.
 // Face is declared in src/assets/font.css.
@@ -504,10 +504,21 @@ function PhotoSharePage() {
                     <Typography sx={{ color: textColour, fontSize: "clamp(0.85rem, 2vmin, 1.05rem)", fontWeight: 600 }}>
                       Sharing has ended
                     </Typography>
-                    <Typography sx={{ color: textColour, fontSize: "clamp(0.7rem, 1.6vmin, 0.9rem)", opacity: 0.7, mt: "6px" }}>
-                      These photos were available for a limited time after your
-                      session and have now been removed. Anything you already
-                      saved stays on your device.
+                    {/* The operator's own wording when they have written one.
+                        Rendered as a text node — never as markup — and with
+                        `pre-line` so the line breaks they typed into the
+                        textarea survive, which is the only reason it is a
+                        textarea rather than a single-line field. */}
+                    <Typography
+                      sx={{
+                        color: textColour,
+                        fontSize: "clamp(0.7rem, 1.6vmin, 0.9rem)",
+                        opacity: 0.7,
+                        mt: "6px",
+                        whiteSpace: "pre-line",
+                      }}
+                    >
+                      {branding.expiryMessage ?? DEFAULT_EXPIRY_MESSAGE}
                     </Typography>
                   </>
                 ) : autoRetryCount < MAX_AUTO_RETRIES ? (

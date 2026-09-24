@@ -49,6 +49,7 @@ export function useBranding(folder) {
         background: { kind: "colour", url: null, colour: next.background.colour },
         colours: next.colours,
         showHeading: next.showHeading,
+        expiryMessage: next.expiryMessage,
       }));
 
       if (next.logo) {

@@ -19,6 +19,9 @@ export const DEFAULT_BRANDING = Object.freeze({
   // The heading is part of the page today, so an account that has set nothing
   // keeps it.
   showHeading: true,
+  // `null` means the stock sentence below, which is what every account that
+  // has not written its own gets.
+  expiryMessage: null,
   background: Object.freeze({ kind: "colour", url: null, colour: "#000000" }),
   // Each of these is what `PhotoSharePage` hard-codes today: `#fff` body text,
   // the `ACCENT` button fill, black words on it. They have to match, because
@@ -38,6 +41,24 @@ export const DEFAULT_BRANDING = Object.freeze({
 const TIMEOUT_MS = 2500;
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
+
+/**
+ * Mirrors `MAX_EXPIRY_MESSAGE_LENGTH` on the platform. Capped again here
+ * because this page cannot scroll — it is one locked viewport — so an
+ * over-long message would push the footer off the bottom rather than wrap.
+ */
+const MAX_EXPIRY_MESSAGE_LENGTH = 500;
+
+/**
+ * The stock expiry sentence.
+ *
+ * Must stay word for word identical to `DEFAULT_EXPIRY_MESSAGE` on the
+ * platform, which shows it as the placeholder an operator is replacing. A
+ * placeholder promising different wording than the page renders would be worse
+ * than no placeholder at all.
+ */
+export const DEFAULT_EXPIRY_MESSAGE =
+  "These photos were available for a limited time after your session and have now been removed. Anything you already saved stays on your device.";
 
 /**
  * An http(s) URL, or null.
@@ -77,6 +98,20 @@ function safeColour(value, fallback) {
   return HEX.test(value) ? value : fallback;
 }
 
+/**
+ * The operator's expiry wording, or `null` for the stock sentence.
+ *
+ * Plain text either way. It is rendered as a React text node, never as markup,
+ * so there is nothing here to sanitise — only a length to hold to and a blank
+ * to treat as "not set".
+ */
+function safeExpiryMessage(value) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return trimmed.slice(0, MAX_EXPIRY_MESSAGE_LENGTH);
+}
+
 function safeImage(value) {
   const url = safeUrl(value?.url);
   if (!url) return null;
@@ -110,6 +145,7 @@ export function normaliseBranding(payload) {
     // Only an explicit `false` hides it — a platform that does not send the
     // field yet, or sends something odd, leaves the heading where it is.
     showHeading: branding.showHeading !== false,
+    expiryMessage: safeExpiryMessage(branding.expiryMessage),
     background: {
       // The colour wins when the image is missing or unusable, so the page
       // always has something to paint. Mirrors `resolveBackground` on the

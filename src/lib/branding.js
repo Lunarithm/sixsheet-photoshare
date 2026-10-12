@@ -16,7 +16,21 @@
  */
 export const DEFAULT_BRANDING = Object.freeze({
   logo: null,
+  // The heading is part of the page today, so an account that has set nothing
+  // keeps it.
+  showHeading: true,
+  // `null` means the stock sentence below, which is what every account that
+  // has not written its own gets.
+  expiryMessage: null,
   background: Object.freeze({ kind: "colour", url: null, colour: "#000000" }),
+  // Each of these is what `PhotoSharePage` hard-codes today: `#fff` body text,
+  // the `ACCENT` button fill, black words on it. They have to match, because
+  // these are what every unbranded account is served.
+  colours: Object.freeze({
+    text: "#FFFFFF",
+    button: "#D4FF3D",
+    buttonLabel: "#000000",
+  }),
 });
 
 /**
@@ -27,6 +41,24 @@ export const DEFAULT_BRANDING = Object.freeze({
 const TIMEOUT_MS = 2500;
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
+
+/**
+ * Mirrors `MAX_EXPIRY_MESSAGE_LENGTH` on the platform. Capped again here
+ * because this page cannot scroll — it is one locked viewport — so an
+ * over-long message would push the footer off the bottom rather than wrap.
+ */
+const MAX_EXPIRY_MESSAGE_LENGTH = 500;
+
+/**
+ * The stock expiry sentence.
+ *
+ * Must stay word for word identical to `DEFAULT_EXPIRY_MESSAGE` on the
+ * platform, which shows it as the placeholder an operator is replacing. A
+ * placeholder promising different wording than the page renders would be worse
+ * than no placeholder at all.
+ */
+export const DEFAULT_EXPIRY_MESSAGE =
+  "These photos were available for a limited time after your session and have now been removed. Anything you already saved stays on your device.";
 
 /**
  * An http(s) URL, or null.
@@ -61,6 +93,25 @@ export function cssUrl(url) {
   return `url("${escaped}")`;
 }
 
+/** A `#RRGGBB` string, or `fallback`. Every colour on the page goes through it. */
+function safeColour(value, fallback) {
+  return HEX.test(value) ? value : fallback;
+}
+
+/**
+ * The operator's expiry wording, or `null` for the stock sentence.
+ *
+ * Plain text either way. It is rendered as a React text node, never as markup,
+ * so there is nothing here to sanitise — only a length to hold to and a blank
+ * to treat as "not set".
+ */
+function safeExpiryMessage(value) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return trimmed.slice(0, MAX_EXPIRY_MESSAGE_LENGTH);
+}
+
 function safeImage(value) {
   const url = safeUrl(value?.url);
   if (!url) return null;
@@ -84,13 +135,17 @@ export function normaliseBranding(payload) {
   if (!branding || typeof branding !== "object") return DEFAULT_BRANDING;
 
   const background = branding.background ?? {};
-  const colour = HEX.test(background.colour)
-    ? background.colour
-    : DEFAULT_BRANDING.background.colour;
+  const colour = safeColour(background.colour, DEFAULT_BRANDING.background.colour);
   const imageUrl = background.kind === "image" ? safeUrl(background.url) : null;
+
+  const colours = branding.colours ?? {};
 
   return {
     logo: safeImage(branding.logo),
+    // Only an explicit `false` hides it — a platform that does not send the
+    // field yet, or sends something odd, leaves the heading where it is.
+    showHeading: branding.showHeading !== false,
+    expiryMessage: safeExpiryMessage(branding.expiryMessage),
     background: {
       // The colour wins when the image is missing or unusable, so the page
       // always has something to paint. Mirrors `resolveBackground` on the
@@ -98,6 +153,17 @@ export function normaliseBranding(payload) {
       kind: imageUrl ? "image" : "colour",
       url: imageUrl,
       colour,
+    },
+    // Field by field, like everything else here: a payload from a platform that
+    // does not send `colours` yet, or that sends one bad value, still styles
+    // the rest of the page rather than falling back wholesale.
+    colours: {
+      text: safeColour(colours.text, DEFAULT_BRANDING.colours.text),
+      button: safeColour(colours.button, DEFAULT_BRANDING.colours.button),
+      buttonLabel: safeColour(
+        colours.buttonLabel,
+        DEFAULT_BRANDING.colours.buttonLabel,
+      ),
     },
   };
 }

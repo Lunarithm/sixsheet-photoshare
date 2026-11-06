@@ -1,0 +1,277 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap");
+
+/* ============================================================
+   Grammy share page (portrait)
+   The background artwork (src/assets/grammy/photoshare_bg.png) bakes in the
+   header, logos and decorations; this sheet lays the content into the gray
+   middle band. The frame keeps the artwork's native portrait aspect so the
+   percentage-positioned overlay always lines up with the baked design.
+   Brand palette: green #58BC47, pink #EB4994.
+   ============================================================ */
+
+.grammy-share-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh; /* fallback */
+  height: 100dvh; /* fill the visible mobile viewport (excludes browser UI) */
+  background: #d9d9d9; /* matches the artwork's gray so side margins blend in */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  font-family: "Syne", system-ui, sans-serif;
+}
+
+/* Portrait artwork frame — fit the whole design within the viewport (height-
+   bound in portrait, capped on wide screens) so the baked header/footer and the
+   overlaid content stay aligned. aspect-ratio is set inline from the art size. */
+.grammy-share-frame {
+  position: relative;
+  height: 100vh; /* fallback */
+  height: 100dvh; /* full visible viewport height */
+  /* Width follows the background artwork's aspect ratio (1725x3734) so the bg
+     is never stretched; on phones that match this ratio it fills edge-to-edge. */
+  aspect-ratio: 1725 / 3734;
+  width: auto;
+  max-width: min(100vw, 500px);
+  background-color: #d9d9d9;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* Content band over the gray middle of the artwork (between the PHOTOSHOOT
+   header and the Meepooh footer). */
+.grammy-share-frame__overlay {
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  top: 14%;
+  bottom: 13%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3%;
+}
+
+/* ====== Carousel (photo ↔ live photo) ====== */
+.grammy-share-frame__carousel {
+  flex: 0 1 auto;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.grammy-share-frame__carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.grammy-share-frame__slide {
+  flex: 0 0 100%;
+  width: 100%;
+  height: auto;
+  /* Vertical room so the tilted media's corners aren't clipped by the
+     carousel's overflow. */
+  padding: 18px 0;
+  scroll-snap-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grammy-share-frame__media-el {
+  /* Smaller than the band so the PHOTOSHOOT title shows above and the Meepooh
+     logo shows below, with a slight playful tilt. */
+  max-width: 78%;
+  max-height: 44vh;
+  width: auto;
+  height: auto;
+  background: #000;
+  object-fit: contain;
+  transform: translateY(6%) rotate(-3deg);
+}
+
+/* ====== Carousel dots ====== */
+.grammy-share-frame__dots {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.grammy-share-frame__dot {
+  width: clamp(5px, 0.85vh, 7px);
+  height: clamp(5px, 0.85vh, 7px);
+  padding: 0;
+  border-radius: 50%;
+  border: 1.5px solid #eb4994;
+  background: transparent;
+  cursor: pointer;
+  transition: background 140ms ease, transform 140ms ease;
+}
+
+.grammy-share-frame__dot.is-active {
+  background: #eb4994;
+  transform: scale(1.1);
+}
+
+/* ====== PHOTO / LIVE PHOTO image buttons ====== */
+.grammy-share-frame__buttons {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 0%;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+}
+
+.grammy-share-frame__btn {
+  flex: 1 1 0;
+  max-width: 44%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+  transition: transform 140ms ease, filter 140ms ease;
+}
+
+.grammy-share-frame__btn:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.grammy-share-frame__btn:active {
+  transform: scale(0.97);
+}
+
+.grammy-share-frame__btn img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 20px;
+}
+
+/* ====== Running number — bottom-right corner ====== */
+.grammy-share-frame__serial {
+  position: absolute;
+  right: 5%;
+  bottom: 0.5%;
+  z-index: 3;
+  color: #eb4994;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: clamp(0.55rem, 1.25vh, 0.8rem);
+  letter-spacing: 0.05em;
+}
+
+/* ====== Status (loading / retry / error) ====== */
+.grammy-share-frame__status {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  color: #1a1a2e;
+}
+
+.grammy-share-frame__status-title {
+  font-size: clamp(1.1rem, 3vh, 1.5rem) !important;
+  font-weight: 800 !important;
+  color: #2f7d31 !important;
+}
+
+.grammy-share-frame__status-text {
+  font-size: clamp(0.85rem, 2vh, 1rem) !important;
+  color: #444 !important;
+}
+
+/* ============================================================
+   Grammy "Exclusive Video Reward" page (/grammy-exclusive-video)
+   Reuses .grammy-share-page / .grammy-share-frame for the portrait fit; the
+   exclusive_bg artwork bakes in the header/footer, so this only lays the video
+   and DOWNLOAD button into the gray middle.
+   ============================================================ */
+.grammy-exclusive__overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 35%;
+  bottom: 11%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7%;
+}
+
+.grammy-exclusive__video-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+}
+
+.grammy-exclusive__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Play overlay — covers the video; play.png circle is centered. */
+.grammy-exclusive__play {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grammy-exclusive__play img {
+  width: 42%;
+  height: auto;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35));
+}
+
+/* DOWNLOAD button (pink pill) */
+.grammy-exclusive__download {
+  flex: 0 0 auto;
+  padding: 2.4% 12%;
+  border: none;
+  border-radius: 999px;
+  background: #eb4994;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: clamp(1rem, 2.6vh, 1.5rem);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(235, 73, 148, 0.45);
+  transition: transform 140ms ease, filter 140ms ease;
+}
+
+.grammy-exclusive__download:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+
+.grammy-exclusive__download:active {
+  transform: scale(0.97);
+}

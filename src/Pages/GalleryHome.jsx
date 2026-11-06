@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   Box,
+  Button,
   Card,
-  CardActionArea,
   CardContent,
   Chip,
   CircularProgress,
@@ -19,12 +19,15 @@ import {
 export default function GalleryHome({ onSelect, apiUrl = "/api/machines/machineNos" }) {
   const [groups, setGroups] = useState([]);
   const [query, setQuery] = useState("");
+  const [prefixes, setPrefixes] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const onSelectDefault = (machineNo) => {
-    navigate(`/gallery/result/${machineNo}`);
+    const raw = prefixes[machineNo];
+    const prefix = (raw || "media").trim().replace(/^\/+|\/+$/g, "") || "media";
+    navigate(`/gallery/result/${machineNo}?prefix=${encodeURIComponent(prefix)}`);
   }
 
 
@@ -121,40 +124,60 @@ export default function GalleryHome({ onSelect, apiUrl = "/api/machines/machineN
           return (
             <Grid item xs={12} sm={6} md={4} lg={3} key={m.machineNo}>
               <Card elevation={3} sx={{ borderRadius: 3, height: "100%" }}>
-                <CardActionArea onClick={() => onSelectDefault(m.machineNo)} sx={{ height: "100%" }}>
-                  <CardContent>
-                    <Stack direction="row" alignItems="center" justifyContent="space-between">
-                      <Typography variant="h6">#{m.machineNo}</Typography>
-                      <Chip label={`${m.totalCount.toLocaleString()} runs`} />
+                <CardContent>
+                  <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Typography variant="h6">#{m.machineNo}</Typography>
+                    <Chip label={`${m.totalCount.toLocaleString()} runs`} />
+                  </Stack>
+
+                  <Box mt={1.5}>
+                    <Typography variant="caption" color="text.secondary">
+                      Machine names
+                    </Typography>
+
+                    <Stack direction="row" flexWrap="wrap" gap={0.5} mt={0.5}>
+                      {topNames.map((n) => (
+                        <Chip key={n} label={n} size="small" variant="outlined" />
+                      ))}
+                      {extraCount > 0 && (
+                        <Tooltip
+                          title={
+                            <Box>
+                              {m.names.map((n) => (
+                                <div key={n}>{n}</div>
+                              ))}
+                            </Box>
+                          }
+                          arrow
+                        >
+                          <Chip size="small" label={`+${extraCount} more`} />
+                        </Tooltip>
+                      )}
                     </Stack>
+                  </Box>
 
-                    <Box mt={1.5}>
-                      <Typography variant="caption" color="text.secondary">
-                        Machine names
-                      </Typography>
-
-                      <Stack direction="row" flexWrap="wrap" gap={0.5} mt={0.5}>
-                        {topNames.map((n) => (
-                          <Chip key={n} label={n} size="small" variant="outlined" />
-                        ))}
-                        {extraCount > 0 && (
-                          <Tooltip
-                            title={
-                              <Box>
-                                {m.names.map((n) => (
-                                  <div key={n}>{n}</div>
-                                ))}
-                              </Box>
-                            }
-                            arrow
-                          >
-                            <Chip size="small" label={`+${extraCount} more`} />
-                          </Tooltip>
-                        )}
-                      </Stack>
-                    </Box>
-                  </CardContent>
-                </CardActionArea>
+                  <Stack direction="row" gap={1} mt={2} alignItems="center">
+                    <TextField
+                      size="small"
+                      label="URL prefix"
+                      placeholder="media"
+                      value={prefixes[m.machineNo] ?? ""}
+                      onChange={(e) =>
+                        setPrefixes((prev) => ({ ...prev, [m.machineNo]: e.target.value }))
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") onSelectDefault(m.machineNo);
+                      }}
+                      fullWidth
+                    />
+                    <Button
+                      variant="contained"
+                      onClick={() => onSelectDefault(m.machineNo)}
+                    >
+                      Open
+                    </Button>
+                  </Stack>
+                </CardContent>
               </Card>
             </Grid>
           );

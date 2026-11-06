@@ -206,3 +206,23 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* QR popup — scoped overrides for the visa page only.
+   index.css forces .popUp-Qr to 260x260 with a tan background, and
+   .overlay-box-Qr to 260x260. Inline styles can't override the
+   `!important` on background, so we re-skin it here without touching
+   the shared rule used by the legacy photoshare/media pages. */
+.visa-share-page .overlay-box-Qr {
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
+.visa-share-page .popUp-Qr {
+  width: auto !important;
+  height: auto !important;
+  min-width: min(86vw, 340px);
+  max-width: min(90vw, 380px);
+  background-color: #1a37ca !important;
+  padding: 28px 24px 22px !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}

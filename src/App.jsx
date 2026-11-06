@@ -28,7 +28,11 @@ import ReactPlayer from "react-player";
 import { ShareSocial } from "react-share-social";
 import axios from "axios";
 import ClipLoader from "react-spinners/ClipLoader";
-import { fetchMediaWithRetry, unregisterStaleServiceWorkers } from "./lib/fetchMedia";
+import {
+  fetchMediaWithRetry,
+  pickExpiresAt,
+  unregisterStaleServiceWorkers,
+} from "./lib/fetchMedia";
 import { saveAs } from "file-saver";
 import QRCode from "react-qr-code";
 import src from "./assets/cap.png";
@@ -39,6 +43,10 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [errorDetail, setErrorDetail] = useState("");
+  // The sharing period has ended. Kept apart from loadError: nothing is broken
+  // and there is nothing to retry.
+  const [expired, setExpired] = useState(false);
+  const [expiresAt, setExpiresAt] = useState(null);
 
   const { shortUUID } = useParams();
 
@@ -78,10 +86,12 @@ function App() {
   }
 
   const dataToApp = async () => {
-    const { source } = await fetchMediaWithRetry(
+    const { source, raw } = await fetchMediaWithRetry(
       import.meta.env.VITE_APIHUB_URL,
       shortUUID
     );
+
+    setExpiresAt(pickExpiresAt(raw));
 
     // Classify sources by file name — never assume index-based ordering
     const imageItem = source.find(
@@ -113,6 +123,10 @@ function App() {
       try {
         await dataToApp();
       } catch (error) {
+        if (error?.expired) {
+          setExpired(true);
+          return;
+        }
         console.error("Failed to load media after retries:", error, error?.diagnostics);
         setLoadError(true);
         const diag = Array.isArray(error?.diagnostics)
@@ -128,6 +142,32 @@ function App() {
 
     goData();
   }, []);
+
+  // A page opened inside the window keeps the photos in memory, so the deadline
+  // has to close the page as well as the API. Drops the blobs at the same time,
+  // so nothing is left to save from.
+  useEffect(() => {
+    if (!expiresAt || expired) return undefined;
+    const msLeft = expiresAt.getTime() - Date.now();
+    // setTimeout overflows past ~24.8 days and fires immediately.
+    if (msLeft > 2147483647) return undefined;
+    const closeShare = () => {
+      setExpired(true);
+      setImage(null);
+      setVdo(null);
+      setImgFile(null);
+      setVdoFile(null);
+      setPathImg("");
+      setPathVdo("");
+      setPathThn("");
+    };
+    if (msLeft <= 0) {
+      closeShare();
+      return undefined;
+    }
+    const timer = setTimeout(closeShare, msLeft);
+    return () => clearTimeout(timer);
+  }, [expiresAt, expired]);
 
   const togglePopup = () => {
     setShare(!shareResult);
@@ -235,6 +275,38 @@ function App() {
               size={100}
               className="all-element-center"
             />
+          ) : expired ? (
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                py: "8vh",
+                px: "4vw",
+                textAlign: "center",
+              }}
+            >
+              <Typography
+                color="#F4F0D3"
+                fontFamily="Boyrun"
+                fontSize="1.6em"
+                fontWeight={600}
+                sx={{ mb: "8px" }}
+              >
+                Sharing has ended
+              </Typography>
+              <Typography
+                color="#F4F0D3"
+                fontFamily="Boyrun"
+                fontSize="1em"
+                sx={{ opacity: 0.8, maxWidth: "36ch" }}
+              >
+                These photos were available for a limited time after your
+                session and have now been removed. Anything you already saved
+                stays on your device.
+              </Typography>
+            </Box>
           ) : loadError || (!pathImg && !pathVdo) ? (
             <Box
               sx={{

@@ -49,7 +49,11 @@ export function useBranding(folder) {
         background: { kind: "colour", url: null, colour: next.background.colour },
         colours: next.colours,
         showHeading: next.showHeading,
+        // Lands with the colours, ahead of the logo itself, so the logo
+        // appears at its final size rather than resizing after it paints.
+        logoSize: next.logoSize,
         expiryMessage: next.expiryMessage,
+        footerText: next.footerText,
       }));
 
       if (next.logo) {

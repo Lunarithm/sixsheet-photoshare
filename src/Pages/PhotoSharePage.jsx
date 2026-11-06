@@ -14,7 +14,12 @@ import "../assets/css/photoShare.css";
 // Top-center logo icon — swap this file (or change the path) to change the icon.
 import capturesIcon from "../assets/iconCap.png";
 import { useBranding } from "../lib/useBranding";
-import { cssUrl, DEFAULT_EXPIRY_MESSAGE } from "../lib/branding";
+import {
+  cssUrl,
+  DEFAULT_EXPIRY_MESSAGE,
+  DEFAULT_FOOTER_TEXT,
+  LOGO_SCALE,
+} from "../lib/branding";
 
 // QR caption ("Scan to download / or print") — Neulis Neue per the design.
 // Face is declared in src/assets/font.css.
@@ -103,6 +108,13 @@ function PhotoSharePage() {
   // hard-code — `#fff` text, the `#D4FF3D` accent, black on it — so an account
   // that has set nothing renders exactly as it did before any of this existed.
   const { text: textColour, button: buttonColour, buttonLabel } = branding.colours;
+  // The operator's size step applies to their own logo only; our default icon
+  // stays the size it has always been.
+  const logoScale = brandLogo ? LOGO_SCALE[branding.logoSize] ?? 1 : 1;
+  const logoBox = {
+    xs: `calc(clamp(48px, 9vmin, 84px) * ${logoScale})`,
+    sm: `calc(clamp(36px, 4.8vmin, 48px) * ${logoScale})`,
+  };
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -463,8 +475,8 @@ function PhotoSharePage() {
               // icon off the critical path on first render too.
               decoding="async"
               sx={{
-                width: { xs: "clamp(48px, 9vmin, 84px)", sm: "clamp(36px, 4.8vmin, 48px)" },
-                height: { xs: "clamp(48px, 9vmin, 84px)", sm: "clamp(36px, 4.8vmin, 48px)" },
+                width: logoBox,
+                height: logoBox,
                 display: "block",
                 objectFit: "contain",
               }}
@@ -473,8 +485,8 @@ function PhotoSharePage() {
               sx={{
                 // Hidden once the account has its own mark: the wordmark is
                 // ours, and printing it beside a customer's logo reads as a
-                // co-brand nobody agreed to. "POWERED BY SIXSHEET" in the
-                // footer is the attribution that stays.
+                // co-brand nobody agreed to. The footer carries our copyright
+                // unless the operator has written their own line there.
                 display: brandLogo ? "none" : { xs: "none", sm: "block" },
                 color: buttonColour,
                 fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
@@ -962,17 +974,25 @@ function PhotoSharePage() {
             Show QR
           </Button>
 
-          {/* Footer */}
-          <Box sx={{ flexShrink: 0, mt: "auto" }}>
+          {/* Footer — the operator's own line from branding, or our
+              copyright. In the text colour at 70%, which on the default white
+              is the `rgba(255,255,255,0.7)` this always was; on a branded page
+              it follows the colour the operator chose for text, so a pale
+              background does not swallow it. */}
+          <Box sx={{ flexShrink: 0, mt: "auto", maxWidth: "100%" }}>
             <Typography
               sx={{
-                color: "rgba(255,255,255,0.7)",
+                color: textColour,
+                opacity: 0.7,
                 fontSize: "clamp(0.6rem, 1.4vmin, 0.78rem)",
                 letterSpacing: "0.08em",
                 fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+                // An operator's line can be a long unbroken string (a URL);
+                // wrap it rather than widen the locked viewport.
+                overflowWrap: "anywhere",
               }}
             >
-              © SIXSHEET GROUP. ALL RIGHT RESERVED
+              {branding.footerText ?? DEFAULT_FOOTER_TEXT}
             </Typography>
           </Box>
         </Box>

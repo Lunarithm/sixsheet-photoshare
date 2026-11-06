@@ -16,12 +16,16 @@
  */
 export const DEFAULT_BRANDING = Object.freeze({
   logo: null,
+  // Today's size. Only applies once the account has a logo of its own.
+  logoSize: "medium",
   // The heading is part of the page today, so an account that has set nothing
   // keeps it.
   showHeading: true,
   // `null` means the stock sentence below, which is what every account that
   // has not written its own gets.
   expiryMessage: null,
+  // `null` means the stock copyright line, `DEFAULT_FOOTER_TEXT` below.
+  footerText: null,
   background: Object.freeze({ kind: "colour", url: null, colour: "#000000" }),
   // Each of these is what `PhotoSharePage` hard-codes today: `#fff` body text,
   // the `ACCENT` button fill, black words on it. They have to match, because
@@ -43,6 +47,27 @@ const TIMEOUT_MS = 2500;
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
 /**
+ * What each logo size step multiplies the page's own logo size by.
+ *
+ * Must match `LOGO_SCALE` on the platform, whose dashboard preview draws the
+ * same steps. Multiplying the existing `clamp()` rather than replacing it with
+ * pixels keeps the logo scaling with the device at every step.
+ */
+export const LOGO_SCALE = Object.freeze({
+  small: 0.75,
+  medium: 1,
+  large: 1.5,
+  xlarge: 2,
+});
+
+/** A known size step, or `medium`. */
+function safeLogoSize(value) {
+  return typeof value === "string" && Object.hasOwn(LOGO_SCALE, value)
+    ? value
+    : DEFAULT_BRANDING.logoSize;
+}
+
+/**
  * Mirrors `MAX_EXPIRY_MESSAGE_LENGTH` on the platform. Capped again here
  * because this page cannot scroll — it is one locked viewport — so an
  * over-long message would push the footer off the bottom rather than wrap.
@@ -59,6 +84,21 @@ const MAX_EXPIRY_MESSAGE_LENGTH = 500;
  */
 export const DEFAULT_EXPIRY_MESSAGE =
   "These photos were available for a limited time after your session and have now been removed. Anything you already saved stays on your device.";
+
+/**
+ * Mirrors `MAX_FOOTER_TEXT_LENGTH` on the platform. Capped again here for the
+ * same reason as the expiry message: the footer sits at the bottom of a page
+ * that cannot scroll.
+ */
+const MAX_FOOTER_TEXT_LENGTH = 100;
+
+/**
+ * The footer every page printed before operators could set their own.
+ *
+ * Must stay character for character identical to `DEFAULT_FOOTER_TEXT` on the
+ * platform, which shows it as the placeholder an operator is replacing.
+ */
+export const DEFAULT_FOOTER_TEXT = "© SIXSHEET GROUP. ALL RIGHT RESERVED";
 
 /**
  * An http(s) URL, or null.
@@ -112,6 +152,20 @@ function safeExpiryMessage(value) {
   return trimmed.slice(0, MAX_EXPIRY_MESSAGE_LENGTH);
 }
 
+/**
+ * The operator's footer line, or `null` for the stock copyright.
+ *
+ * One line: every run of whitespace, line breaks included, collapses to a
+ * single space — the same rule the platform saves by. A React text node like
+ * the expiry message, so there is nothing to sanitise.
+ */
+function safeFooterText(value) {
+  if (typeof value !== "string") return null;
+  const text = value.replace(/\s+/g, " ").trim();
+  if (!text) return null;
+  return text.slice(0, MAX_FOOTER_TEXT_LENGTH);
+}
+
 function safeImage(value) {
   const url = safeUrl(value?.url);
   if (!url) return null;
@@ -142,10 +196,12 @@ export function normaliseBranding(payload) {
 
   return {
     logo: safeImage(branding.logo),
+    logoSize: safeLogoSize(branding.logoSize),
     // Only an explicit `false` hides it — a platform that does not send the
     // field yet, or sends something odd, leaves the heading where it is.
     showHeading: branding.showHeading !== false,
     expiryMessage: safeExpiryMessage(branding.expiryMessage),
+    footerText: safeFooterText(branding.footerText),
     background: {
       // The colour wins when the image is missing or unusable, so the page
       // always has something to paint. Mirrors `resolveBackground` on the

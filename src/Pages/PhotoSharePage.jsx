@@ -475,8 +475,16 @@ function PhotoSharePage() {
               // icon off the critical path on first render too.
               decoding="async"
               sx={{
-                width: logoBox,
+                // The step sets the logo's height; its width follows the
+                // image's own shape. A square box (the default icon's) would
+                // shrink a wide wordmark to a sliver the width of the square,
+                // where no size step makes a visible difference. A square logo
+                // comes out exactly as before. Capped so a very wide one, or a
+                // large step, cannot run past the screen edge — `contain`
+                // keeps its proportions when the cap bites.
+                width: brandLogo ? "auto" : logoBox,
                 height: logoBox,
+                maxWidth: brandLogo ? { xs: "86vw", sm: "min(60vw, 640px)" } : "none",
                 display: "block",
                 objectFit: "contain",
               }}
